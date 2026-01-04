@@ -1,0 +1,632 @@
+[
+  {
+    "id": "3264_CZZ_0851",
+    "result_image": "/images/3264_stylized_by_CZZ_0851.png",
+    "content_image": "/images/3264.jpg",
+    "style_image": "/images/CZZ_0851.png",
+    "scores": {
+      "lpips": 0.11227461695671082,
+      "clip": 0.6446487307548523
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3265_CZZ_0877",
+    "result_image": "/images/3265_stylized_by_CZZ_0877.png",
+    "content_image": "/images/3265.jpg",
+    "style_image": "/images/CZZ_0877.png",
+    "scores": {
+      "lpips": 0.1217271238565445,
+      "clip": 0.6089993715286255
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3266_DGS_1309",
+    "result_image": "/images/3266_stylized_by_DGS_1309.png",
+    "content_image": "/images/3266.jpg",
+    "style_image": "/images/DGS_1309.png",
+    "scores": {
+      "lpips": 0.15754540264606476,
+      "clip": 0.674412190914154
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3267_DGS_1919",
+    "result_image": "/images/3267_stylized_by_DGS_1919.png",
+    "content_image": "/images/3267.jpg",
+    "style_image": "/images/DGS_1919.png",
+    "scores": {
+      "lpips": 0.14706197381019592,
+      "clip": 0.6349827647209167
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3268_DMC_0443",
+    "result_image": "/images/3268_stylized_by_DMC_0443.png",
+    "content_image": "/images/3268.jpg",
+    "style_image": "/images/DMC_0443.png",
+    "scores": {
+      "lpips": 0.1743914783000946,
+      "clip": 0.701440155506134
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3269_DMC_0895",
+    "result_image": "/images/3269_stylized_by_DMC_0895.png",
+    "content_image": "/images/3269.jpg",
+    "style_image": "/images/DMC_0895.png",
+    "scores": {
+      "lpips": 0.14898641407489777,
+      "clip": 0.7167674899101257
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3270_GHZ0089",
+    "result_image": "/images/3270_stylized_by_GHZ0089.png",
+    "content_image": "/images/3270.jpg",
+    "style_image": "/images/GHZ0089.png",
+    "scores": {
+      "lpips": 0.15823723375797272,
+      "clip": 0.5896546840667725
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3271_GHZ0215",
+    "result_image": "/images/3271_stylized_by_GHZ0215.png",
+    "content_image": "/images/3271.jpg",
+    "style_image": "/images/GHZ0215.png",
+    "scores": {
+      "lpips": 0.13280382752418518,
+      "clip": 0.6186869144439697
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3272_GLH_0157",
+    "result_image": "/images/3272_stylized_by_GLH_0157.png",
+    "content_image": "/images/3272.jpg",
+    "style_image": "/images/GLH_0157.png",
+    "scores": {
+      "lpips": 0.18001700937747955,
+      "clip": 0.6632885932922363
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3273_GLH_0751",
+    "result_image": "/images/3273_stylized_by_GLH_0751.png",
+    "content_image": "/images/3273.jpg",
+    "style_image": "/images/GLH_0751.png",
+    "scores": {
+      "lpips": 0.14272812008857727,
+      "clip": 0.6238220930099487
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3274_GSX_0567",
+    "result_image": "/images/3274_stylized_by_GSX_0567.png",
+    "content_image": "/images/3274.jpg",
+    "style_image": "/images/GSX_0567.png",
+    "scores": {
+      "lpips": 0.16868475079536438,
+      "clip": 0.6426670551300049
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3275_GSX_1965",
+    "result_image": "/images/3275_stylized_by_GSX_1965.png",
+    "content_image": "/images/3275.jpg",
+    "style_image": "/images/GSX_1965.png",
+    "scores": {
+      "lpips": 0.08216299116611481,
+      "clip": 0.6726775765419006
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3276_JSM_1749",
+    "result_image": "/images/3276_stylized_by_JSM_1749.png",
+    "content_image": "/images/3276.jpg",
+    "style_image": "/images/JSM_1749.png",
+    "scores": {
+      "lpips": 0.12567099928855896,
+      "clip": 0.5694845914840698
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3277_JSM_6659",
+    "result_image": "/images/3277_stylized_by_JSM_6659.png",
+    "content_image": "/images/3277.jpg",
+    "style_image": "/images/JSM_6659.png",
+    "scores": {
+      "lpips": 0.11713160574436188,
+      "clip": 0.6591949462890625
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3278_JXF_0113",
+    "result_image": "/images/3278_stylized_by_JXF_0113.png",
+    "content_image": "/images/3278.jpg",
+    "style_image": "/images/JXF_0113.png",
+    "scores": {
+      "lpips": 0.1663801372051239,
+      "clip": 0.6131786704063416
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3279_JXF_0203",
+    "result_image": "/images/3279_stylized_by_JXF_0203.png",
+    "content_image": "/images/3279.jpg",
+    "style_image": "/images/JXF_0203.png",
+    "scores": {
+      "lpips": 0.18130946159362793,
+      "clip": 0.5562057495117188
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3280_JZY_0141",
+    "result_image": "/images/3280_stylized_by_JZY_0141.png",
+    "content_image": "/images/3280.jpg",
+    "style_image": "/images/JZY_0141.png",
+    "scores": {
+      "lpips": 0.18450476229190826,
+      "clip": 0.5760785341262817
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3281_JZY_0217",
+    "result_image": "/images/3281_stylized_by_JZY_0217.png",
+    "content_image": "/images/3281.jpg",
+    "style_image": "/images/JZY_0217.png",
+    "scores": {
+      "lpips": 0.14832958579063416,
+      "clip": 0.7055554389953613
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3282_PGC_0029",
+    "result_image": "/images/3282_stylized_by_PGC_0029.png",
+    "content_image": "/images/3282.jpg",
+    "style_image": "/images/PGC_0029.png",
+    "scores": {
+      "lpips": 0.16159941256046295,
+      "clip": 0.6108359098434448
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3283_PGC_0031",
+    "result_image": "/images/3283_stylized_by_PGC_0031.png",
+    "content_image": "/images/3283.jpg",
+    "style_image": "/images/PGC_0031.png",
+    "scores": {
+      "lpips": 0.14430484175682068,
+      "clip": 0.6471372842788696
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3284_PJQ0141",
+    "result_image": "/images/3284_stylized_by_PJQ0141.png",
+    "content_image": "/images/3284.jpg",
+    "style_image": "/images/PJQ0141.png",
+    "scores": {
+      "lpips": 0.18313203752040863,
+      "clip": 0.6331195831298828
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3285_PJQ0529",
+    "result_image": "/images/3285_stylized_by_PJQ0529.png",
+    "content_image": "/images/3285.jpg",
+    "style_image": "/images/PJQ0529.png",
+    "scores": {
+      "lpips": 0.14337380230426788,
+      "clip": 0.6312490701675415
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3286_QKH0135",
+    "result_image": "/images/3286_stylized_by_QKH0135.png",
+    "content_image": "/images/3286.jpg",
+    "style_image": "/images/QKH0135.png",
+    "scores": {
+      "lpips": 0.15319208800792694,
+      "clip": 0.5233502388000488
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3287_QKH0221",
+    "result_image": "/images/3287_stylized_by_QKH0221.png",
+    "content_image": "/images/3287.jpg",
+    "style_image": "/images/QKH0221.png",
+    "scores": {
+      "lpips": 0.35422536730766296,
+      "clip": 0.731045663356781
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3288_QSX_0161",
+    "result_image": "/images/3288_stylized_by_QSX_0161.png",
+    "content_image": "/images/3288.jpg",
+    "style_image": "/images/QSX_0161.png",
+    "scores": {
+      "lpips": 0.27733126282691956,
+      "clip": 0.6977823972702026
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3289_QSX_0409",
+    "result_image": "/images/3289_stylized_by_QSX_0409.png",
+    "content_image": "/images/3289.jpg",
+    "style_image": "/images/QSX_0409.png",
+    "scores": {
+      "lpips": 0.24415455758571625,
+      "clip": 0.6204839944839478
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3290_SGY_0133",
+    "result_image": "/images/3290_stylized_by_SGY_0133.png",
+    "content_image": "/images/3290.jpg",
+    "style_image": "/images/SGY_0133.png",
+    "scores": {
+      "lpips": 0.18289580941200256,
+      "clip": 0.6694132089614868
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3291_SGY_0233",
+    "result_image": "/images/3291_stylized_by_SGY_0233.png",
+    "content_image": "/images/3291.jpg",
+    "style_image": "/images/SGY_0233.png",
+    "scores": {
+      "lpips": 0.11269418895244598,
+      "clip": 0.6916451454162598
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3292_SK4_0086",
+    "result_image": "/images/3292_stylized_by_SK4_0086.png",
+    "content_image": "/images/3292.jpg",
+    "style_image": "/images/SK4_0086.png",
+    "scores": {
+      "lpips": 0.2469397485256195,
+      "clip": 0.6407556533813477
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3293_SK4_1299",
+    "result_image": "/images/3293_stylized_by_SK4_1299.png",
+    "content_image": "/images/3293.jpg",
+    "style_image": "/images/SK4_1299.png",
+    "scores": {
+      "lpips": 0.19160161912441254,
+      "clip": 0.7166988253593445
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3294_WCX0033",
+    "result_image": "/images/3294_stylized_by_WCX0033.png",
+    "content_image": "/images/3294.jpg",
+    "style_image": "/images/WCX0033.png",
+    "scores": {
+      "lpips": 0.2648191452026367,
+      "clip": 0.6666399240493774
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3295_WCX0057",
+    "result_image": "/images/3295_stylized_by_WCX0057.png",
+    "content_image": "/images/3295.jpg",
+    "style_image": "/images/WCX0057.png",
+    "scores": {
+      "lpips": 0.24028989672660828,
+      "clip": 0.692184329032898
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3296_WYF_0147",
+    "result_image": "/images/3296_stylized_by_WYF_0147.png",
+    "content_image": "/images/3296.jpg",
+    "style_image": "/images/WYF_0147.png",
+    "scores": {
+      "lpips": 0.18422389030456543,
+      "clip": 0.7025892734527588
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3297_WYF_1037",
+    "result_image": "/images/3297_stylized_by_WYF_1037.png",
+    "content_image": "/images/3297.jpg",
+    "style_image": "/images/WYF_1037.png",
+    "scores": {
+      "lpips": 0.1583399772644043,
+      "clip": 0.6790794730186462
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3298_WYF_2179",
+    "result_image": "/images/3298_stylized_by_WYF_2179.png",
+    "content_image": "/images/3298.jpg",
+    "style_image": "/images/WYF_2179.png",
+    "scores": {
+      "lpips": 0.15652690827846527,
+      "clip": 0.6855827569961548
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3299_WYF_2205",
+    "result_image": "/images/3299_stylized_by_WYF_2205.png",
+    "content_image": "/images/3299.jpg",
+    "style_image": "/images/WYF_2205.png",
+    "scores": {
+      "lpips": 0.21202871203422546,
+      "clip": 0.6586026549339294
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3300_XBD_0299",
+    "result_image": "/images/3300_stylized_by_XBD_0299.png",
+    "content_image": "/images/3300.jpg",
+    "style_image": "/images/XBD_0299.png",
+    "scores": {
+      "lpips": 0.1780952662229538,
+      "clip": 0.6564151048660278
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3301_XBD_0309",
+    "result_image": "/images/3301_stylized_by_XBD_0309.png",
+    "content_image": "/images/3301.jpg",
+    "style_image": "/images/XBD_0309.png",
+    "scores": {
+      "lpips": 0.20615890622138977,
+      "clip": 0.6545768976211548
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3302_XCJ_0083",
+    "result_image": "/images/3302_stylized_by_XCJ_0083.png",
+    "content_image": "/images/3302.jpg",
+    "style_image": "/images/XCJ_0083.png",
+    "scores": {
+      "lpips": 0.19325053691864014,
+      "clip": 0.7231899499893188
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3303_XCJ_0219",
+    "result_image": "/images/3303_stylized_by_XCJ_0219.png",
+    "content_image": "/images/3303.jpg",
+    "style_image": "/images/XCJ_0219.png",
+    "scores": {
+      "lpips": 0.13608123362064362,
+      "clip": 0.6550962924957275
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3304_CZZ_0851",
+    "result_image": "/images/3304_stylized_by_CZZ_0851.png",
+    "content_image": "/images/3304.jpg",
+    "style_image": "/images/CZZ_0851.png",
+    "scores": {
+      "lpips": 0.12302181124687195,
+      "clip": 0.6914977431297302
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  },
+  {
+    "id": "3305_CZZ_0877",
+    "result_image": "/images/3305_stylized_by_CZZ_0877.png",
+    "content_image": "/images/3305.jpg",
+    "style_image": "/images/CZZ_0877.png",
+    "scores": {
+      "lpips": 0.17189432680606842,
+      "clip": 0.6073083877563477
+    },
+    "params": {
+      "strength": 0.5,
+      "controlnet_scale": 0.9,
+      "ip_adapter_scale": 0.5
+    }
+  }
+]

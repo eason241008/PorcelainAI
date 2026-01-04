@@ -1,120 +1,199 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MOCK_DATABASE } from '../constants';
-import { ImageAsset, GalleryFilter } from '../types';
-import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { ImageAsset } from '../types';
+import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface GalleryProps {
   onSelect: (asset: ImageAsset) => void;
-  selectedIds: string[]; // IDs currently active in the workbench
+  selectedIds: string[];
 }
 
+type DisplayMode = 'fragment' | 'vessel';
+
+// 可以适当增加每页数量，因为图片变小了，一页能放下更多
+const ITEMS_PER_PAGE = 12; 
+
 export const Gallery: React.FC<GalleryProps> = ({ onSelect, selectedIds }) => {
-  const [filter, setFilter] = useState<GalleryFilter>({ search: '', type: '全部' });
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('fragment');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [displayMode, searchQuery]);
 
   const filteredAssets = useMemo(() => {
     return MOCK_DATABASE.filter(asset => {
-      const matchesSearch = asset.title.toLowerCase().includes(filter.search.toLowerCase()) || 
-                            asset.description.toLowerCase().includes(filter.search.toLowerCase());
-      const matchesType = filter.type === 'all' || asset.type === filter.type;
+      const matchesSearch = asset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            asset.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = asset.type === displayMode;
       return matchesSearch && matchesType;
     });
-  }, [filter]);
+  }, [displayMode, searchQuery]);
+
+  const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
+  
+  const paginatedAssets = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAssets.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAssets, currentPage]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   return (
-    <div className="w-full bg-white rounded-sm shadow-sm border border-clay-200 p-8 md:p-10">
-      <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6 border-b border-clay-100 pb-6">
+    <div className="w-full bg-white rounded-sm shadow-sm border border-clay-200 p-6 md:p-8 flex flex-col min-h-[800px]">
+      {/* Header & Controls */}
+      <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-6 border-b border-clay-100 pb-4">
         <div>
-          <h2 className="text-3xl font-serif text-clay-900 italic mb-2">典藏</h2>
-          <p className="text-clay-600 font-light text-sm max-w-md">浏览我们精心挑选的陶器碎片和器皿几何体，创作你的艺术品。</p>
+          <h2 className="text-2xl font-serif text-clay-900 italic mb-2">典藏</h2>
+          <p className="text-clay-600 font-light text-xs max-w-md">
+            {displayMode === 'fragment' ? '浏览古陶碎片，提取独特的历史纹理。' : '选择现代器皿模型，作为风格迁移的载体。'}
+          </p>
         </div>
         
-        {/* Search & Filter Controls */}
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="flex gap-3 w-full md:w-auto items-center">
           <div className="relative flex-grow md:flex-grow-0">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-clay-400" />
             <input 
               type="text" 
-              placeholder="搜索文物..." 
-              value={filter.search}
-              onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
-              className="pl-9 pr-4 py-2 border border-clay-200 bg-clay-50/50 rounded-sm text-sm w-full md:w-64 focus:outline-none focus:border-indigo-dye transition-colors font-light placeholder:text-clay-400"
+              placeholder={displayMode === 'fragment' ? "搜索碎片..." : "搜索器型..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-1.5 border border-clay-200 bg-clay-50/50 rounded-sm text-xs w-full md:w-56 focus:outline-none focus:border-indigo-dye transition-colors font-light placeholder:text-clay-400"
             />
           </div>
-          <div className="relative">
-             <select
-               value={filter.type}
-               onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value as any }))}
-               className="pl-4 pr-10 py-2 border border-clay-200 bg-white rounded-sm text-sm appearance-none focus:outline-none focus:border-indigo-dye cursor-pointer font-medium text-clay-700"
-             >
-               <option value="all">全部</option>
-               <option value="fragment">碎片</option>
-               <option value="vessel">器皿</option>
-             </select>
-             <FunnelIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-clay-400 pointer-events-none" />
+          
+          <div className="flex bg-clay-50 p-1 rounded-md border border-clay-200">
+            <button
+              onClick={() => setDisplayMode('fragment')}
+              className={`px-3 py-1 rounded-sm text-xs font-medium transition-all ${
+                displayMode === 'fragment' 
+                  ? 'bg-white text-indigo-dye shadow-sm ring-1 ring-black/5' 
+                  : 'text-clay-600 hover:text-clay-900'
+              }`}
+            >
+              碎片库
+            </button>
+            <button
+              onClick={() => setDisplayMode('vessel')}
+              className={`px-3 py-1 rounded-sm text-xs font-medium transition-all ${
+                displayMode === 'vessel' 
+                  ? 'bg-white text-indigo-dye shadow-sm ring-1 ring-black/5' 
+                  : 'text-clay-600 hover:text-clay-900'
+              }`}
+            >
+              器皿库
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {filteredAssets.map((asset) => (
+      {/* Gallery Grid */}
+      {/* 修改点1：增加列数 grid-cols-5，使卡片变小 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 flex-grow content-start">
+        {paginatedAssets.map((asset) => (
           <div 
             key={asset.id} 
-            className={`group relative overflow-hidden bg-white cursor-pointer transition-all duration-500 ${
-              selectedIds.includes(asset.id) ? 'ring-2 ring-offset-4 ring-indigo-dye' : 'hover:shadow-xl'
+            className={`group relative bg-white cursor-pointer transition-all duration-300 border border-transparent ${
+              selectedIds.includes(asset.id) 
+                ? 'ring-2 ring-indigo-dye shadow-md' 
+                : 'hover:border-clay-200 hover:shadow-lg'
             }`}
             onClick={() => onSelect(asset)}
           >
-            <div className="aspect-[4/5] bg-clay-100 relative overflow-hidden">
+            {/* Image Container */}
+            {/* 修改点2：添加 p-6 (padding) 让图片视觉缩小 */}
+            {/* 修改点3：aspect-square 可能比 4/5 更适合展示缩小后的物体 */}
+            <div className="aspect-[4/5] bg-clay-50 relative overflow-hidden p-6 flex items-center justify-center">
                <img 
                  src={asset.url} 
                  alt={asset.title} 
-                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter grayscale-[20%] group-hover:grayscale-0"
+                 // 修改点4：object-contain 替代 object-cover，确保完整显示不被裁剪
+                 // group-hover:scale-110 依然保留，提供悬停放大效果
+                 className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 drop-shadow-sm"
                />
                
-               {/* Overlay Info */}
-               <div className="absolute inset-0 bg-indigo-dye/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-6">
-                 <p className="text-white font-serif text-lg italic mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{asset.title}</p>
-                 <div className="w-8 h-px bg-white/50 mb-3"></div>
-                 <p className="text-white/80 text-xs font-light leading-relaxed translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">{asset.description}</p>
-                 <button className="mt-4 text-[10px] uppercase tracking-widest text-white border border-white/30 px-3 py-1 hover:bg-white hover:text-indigo-dye transition-colors">选择</button>
+               {/* Overlay - 调整为悬浮时显示在底部，避免遮挡太小的图片 */}
+               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-indigo-dye/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end items-center pb-4 pt-10">
+                 <button className="text-[10px] uppercase tracking-widest text-white border border-white/40 px-3 py-1 hover:bg-white hover:text-indigo-dye transition-colors">
+                   {selectedIds.includes(asset.id) ? '已选择' : '选择'}
+                 </button>
                </div>
                
-               {/* Type Badge (Visible always) */}
-               <span className={`absolute top-0 left-0 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm ${
+               {/* Badge */}
+               <span className={`absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-sm rounded-sm ${
                  asset.type === 'fragment' ? 'bg-indigo-dye/80' : 'bg-clay-900/60'
                }`}>
-                 {asset.type}
+                 {asset.type === 'fragment' ? 'STYLE' : 'SHAPE'}
                </span>
             </div>
             
-            {/* Simple label below */}
-            <div className="py-3 px-1">
-              <h4 className="font-serif text-clay-900 text-lg leading-tight group-hover:text-indigo-dye transition-colors">{asset.title}</h4>
-              <p className="text-xs text-clay-500 mt-1 uppercase tracking-wider">{asset.era || 'Unknown Era'}</p>
+            {/* Info - 字体调小适配更小的卡片 */}
+            <div className="py-3 px-3 text-center bg-white">
+              <h4 className="font-serif text-clay-900 text-sm font-medium group-hover:text-indigo-dye transition-colors truncate">
+                {asset.title}
+              </h4>
+              <p className="text-[10px] text-clay-400 mt-0.5 uppercase tracking-wider">
+                {asset.era || '未知年代'}
+              </p>
             </div>
             
-            {/* Selection Indicator */}
+            {/* Selection Checkmark */}
              {selectedIds.includes(asset.id) && (
-              <div className="absolute top-2 right-2 bg-indigo-dye text-white rounded-full p-1 shadow-lg z-10">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="absolute top-2 right-2 bg-indigo-dye text-white rounded-full p-1 shadow-sm z-10 animate-bounce-short">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
             )}
           </div>
         ))}
+        
+        {/* Empty State */}
         {filteredAssets.length === 0 && (
-          <div className="col-span-full py-20 text-center">
-            <p className="text-clay-400 font-serif text-xl italic">未找到文物。</p>
+          <div className="col-span-full py-20 text-center flex flex-col items-center">
+            <div className="w-12 h-12 bg-clay-50 rounded-full flex items-center justify-center mb-4 text-clay-400">
+               <MagnifyingGlassIcon className="w-6 h-6" />
+            </div>
+            <p className="text-clay-500 font-serif text-lg italic">未找到相关文物</p>
             <button 
-                onClick={() => setFilter({search: '', type: 'all'})}
-                className="mt-4 text-indigo-dye text-sm underline hover:text-indigo-light"
+                onClick={() => setSearchQuery('')}
+                className="mt-4 px-4 py-1.5 bg-indigo-dye text-white text-xs rounded-sm hover:bg-indigo-light transition-colors"
             >
-                清除筛选
+                查看全部
             </button>
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center items-center gap-4 border-t border-clay-100 pt-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-1.5 rounded-full border border-clay-200 text-clay-600 hover:bg-clay-50 hover:text-indigo-dye disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeftIcon className="w-4 h-4" />
+          </button>
+          
+          <span className="text-xs font-medium text-clay-700 font-mono">
+            {currentPage} / {totalPages}
+          </span>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-1.5 rounded-full border border-clay-200 text-clay-600 hover:bg-clay-50 hover:text-indigo-dye disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRightIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
