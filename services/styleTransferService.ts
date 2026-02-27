@@ -1,17 +1,23 @@
 // services/styleTransferService.ts
 
-export interface StyleTransferRequest {
-  contentImage: string; // base64 without prefix usually, or handle in API
-  styleImage: string;   // base64
-  promptOverride?: string;
+const API_BASE_URL = 'http://localhost:8000'; // Flask API 地址
+
+export interface GenerationCandidate {
+  image: string;      // Base64 string
+  params: any;        // 必须保存，用于回传给后端
+  debug_info?: string;
 }
 
-export interface StyleTransferResponse {
-  resultImage: string;
+export interface InteractiveResponse {
+  results: GenerationCandidate[];
+  tuner_state: {
+    center: any;
+    sigma: number;
+  };
 }
 
 /**
- * Converts a URL to a Base64 string
+ * 将 URL 转换为 Base64
  */
 export const urlToBase64 = async (url: string): Promise<string> => {
   try {
@@ -19,13 +25,7 @@ export const urlToBase64 = async (url: string): Promise<string> => {
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        // Keep the prefix (data:image/...) as the backend might expect it or strip it there.
-        // Based on App.tsx usage, it splits the result (result.split(',')[1]), 
-        // so returning full data URL is correct here.
-        resolve(result); 
-      };
+      reader.onloadend = () => resolve(reader.result as string);
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
@@ -36,47 +36,75 @@ export const urlToBase64 = async (url: string): Promise<string> => {
 };
 
 /**
- * Calls the Next.js API route to perform style transfer
- * Matches the signature expected by App.tsx: (styleBase64, contentBase64)
+ * 重置调参器状态 (Start New Session)
  */
-export const generateStyledPottery = async (
+export const resetTuner = async (): Promise<void> => {
+  await fetch(`${API_BASE_URL}/interactive/reset`, { method: 'POST' });
+};
+
+/**
+ * 核心交互生成函数
+ * @param styleImage Base64 string
+ * @param contentImage Base64 string
+ * @param action 'select' | 'reject' | undefined (initial)
+ * @param chosenParams 当 action 为 'select' 时必须传入
+ */
+export const generateInteractive = async (
   styleImage: string,
-  contentImage: string
-): Promise<string> => {
-  try {
-    // Construct payload. 
-    // App.tsx passes base64 strings.
-    // The API /api/generate expects { contentImage, styleImage }
-    
-    const payload: StyleTransferRequest = {
-      styleImage,
-      contentImage,
-    };
+  contentImage: string,
+  action?: 'select' | 'reject',
+  chosenParams?: any
+): Promise<InteractiveResponse> => {
+  
+  const payload = {
+    styleImage,
+    contentImage,
+    action,         // 'select', 'reject' or null
+    chosen_params: chosenParams,
+    batch_size: 2   // 每次生成 2 张供对比
+  };
 
-    const response = await fetch('/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+  const response = await fetch(`${API_BASE_URL}/interactive/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to process image');
-    }
-
-    // Return the result image (Base64)
-    // Flask usually returns "data:image/png;base64,..." or just base64.
-    // If it's just base64, we might want to ensure prefix if the UI expects it.
-    // But let's assume the backend returns a displayable string or App handles it.
-    // Looking at App.tsx: <img src={resultImage} ... /> -> needs data URI prefix if it's raw base64.
-    // The previous code in generate.ts returned data.resultImage directly.
-    
-    return data.resultImage;
-  } catch (error) {
-    console.error('Service Error:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(data.error || 'Interaction failed');
   }
+
+  return data;
+};
+
+export interface AnalysisResult {
+  title: string;
+  description: string;
+  tags: string[];
+}
+
+export const analyzeArtifact = async (
+  image: string,
+  styleDesc: string,
+  contentDesc: string
+): Promise<AnalysisResult> => {
+  const payload = {
+    image,
+    style_desc: styleDesc,
+    content_desc: contentDesc
+  };
+
+  const response = await fetch(`${API_BASE_URL}/interactive/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Analysis failed');
+  }
+  return data;
 };
