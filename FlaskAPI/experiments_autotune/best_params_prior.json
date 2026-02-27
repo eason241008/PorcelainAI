@@ -1,0 +1,5 @@
+{
+  "strength": 0.75,
+  "controlnet_scale": 0.95,
+  "ip_adapter_scale": 0.85
+}
