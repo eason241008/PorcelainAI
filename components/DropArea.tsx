@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { ImageAsset } from '../types';
 
@@ -24,6 +24,42 @@ export const DropArea: React.FC<DropAreaProps> = ({
   type
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isActive) return;
+    dragCounterRef.current++;
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+    if (!isActive) return;
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      onUpload(files[0]);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -35,7 +71,7 @@ export const DropArea: React.FC<DropAreaProps> = ({
   const displayTitle = selectedAsset?.title || (uploadedImage ? "自定义上传" : null);
 
   return (
-    <div className={`flex-1 flex flex-col h-full transition-all duration-500 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 hover:opacity-80'}`}>
+    <div className={`flex-1 flex flex-col h-full transition-all duration-500 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2'}`}>
       <div className="flex justify-between items-baseline mb-4 px-2">
         <h3 className="text-2xl font-serif text-clay-900 italic">{title}</h3>
         <span className="text-[10px] font-bold text-indigo-light uppercase tracking-[0.2em] border border-indigo-light/30 px-2 py-1 rounded-full">{type}</span>
@@ -46,10 +82,38 @@ export const DropArea: React.FC<DropAreaProps> = ({
           relative flex-grow min-h-[360px] rounded-sm transition-all duration-500 group overflow-hidden
           ${imageSrc 
             ? 'bg-white shadow-md' 
-            : 'bg-clay-100/30 border border-dashed border-clay-300 hover:border-indigo-dye/40 hover:bg-clay-100/50'
+            : isDragging
+              ? 'bg-indigo-dye/5 border-2 border-dashed border-indigo-dye scale-[1.02] shadow-lg'
+              : 'bg-clay-100/30 border border-dashed border-clay-300 hover:border-indigo-dye/40 hover:bg-clay-100/50'
           }
         `}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
+        {/* Inactive Overlay */}
+        {!isActive && (
+          <div className="absolute inset-0 z-30 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-not-allowed rounded-sm">
+            <div className="w-12 h-12 rounded-full bg-clay-100 flex items-center justify-center mb-3">
+              <svg className="w-6 h-6 text-clay-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </div>
+            <p className="text-sm text-clay-500 font-medium">请先选择纹饰来源</p>
+            <p className="text-[10px] text-clay-400 mt-1">完成步骤 ① 后自动解锁</p>
+          </div>
+        )}
+
+        {/* Drag Overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-30 bg-indigo-dye/10 border-2 border-dashed border-indigo-dye rounded-sm flex items-center justify-center pointer-events-none">
+            <div className="text-center">
+              <ArrowUpTrayIcon className="w-10 h-10 text-indigo-dye mx-auto mb-2 animate-bounce" />
+              <p className="text-sm text-indigo-dye font-bold">释放以上传图片</p>
+            </div>
+          </div>
+        )}
         {imageSrc ? (
           <>
             <div className="absolute inset-0 p-4 pb-16">

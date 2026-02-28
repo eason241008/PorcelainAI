@@ -41,16 +41,22 @@ export const urlToBase64 = async (url: string): Promise<string> => {
  */
 export const generateStyledPottery = async (
   styleImage: string,
-  contentImage: string
+  contentImage: string,
+  ipAdapterWeight: number = 0.8,
+  controlNetWeight: number = 0.6,
+  denoisingStrength: number = 0.75
 ): Promise<string> => {
   try {
     // Construct payload. 
     // App.tsx passes base64 strings.
-    // The API /api/generate expects { contentImage, styleImage }
+    // The API /api/generate expects { contentImage, styleImage, ipAdapterWeight, controlNetWeight, denoisingStrength }
     
-    const payload: StyleTransferRequest = {
+    const payload = {
       styleImage,
       contentImage,
+      ipAdapterWeight,
+      controlNetWeight,
+      denoisingStrength
     };
 
     const response = await fetch('/api/generate', {
