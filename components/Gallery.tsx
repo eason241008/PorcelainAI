@@ -128,7 +128,7 @@ export const Gallery: React.FC<GalleryProps> = ({ onSelect, selectedIds }) => {
                <span className={`absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-sm rounded-sm ${
                  asset.type === 'fragment' ? 'bg-indigo-dye/80' : 'bg-clay-900/60'
                }`}>
-                 {asset.type === 'fragment' ? 'STYLE' : 'SHAPE'}
+                 {asset.type === 'fragment' ? 'STYLE' : 'VESSEL'}
                </span>
             </div>
             

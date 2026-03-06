@@ -42,9 +42,9 @@ export const ShowcaseCarousel: React.FC = () => {
                 
                 <div className="flex flex-col items-center">
                    <div className="w-12 h-12 rounded-full border-2 border-white/30 overflow-hidden mb-1">
-                    <img src={item.contentThumb} className="w-full h-full object-cover" alt="Shape" />
+                    <img src={item.contentThumb} className="w-full h-full object-cover" alt="Vessel" />
                   </div>
-                  <span className="text-white/60 text-[10px] uppercase tracking-widest">Shape</span>
+                  <span className="text-white/60 text-[10px] uppercase tracking-widest">Vessel</span>
                 </div>
               </div>
             </div>

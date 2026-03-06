@@ -14,6 +14,25 @@ export default defineConfig(({ mode }) => {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api\/generate/, '/process'),
             secure: false,
+            timeout: 300000,  // 5 分钟超时（推理耗时较长）
+          },
+          '/api/health': {
+            target: 'http://127.0.0.1:8000',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api\/health/, '/health'),
+            secure: false,
+          },
+          '/api/status': {
+            target: 'http://127.0.0.1:8000',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api\/status/, '/status'),
+            secure: false,
+          },
+          '/api/chat': {
+            target: 'http://127.0.0.1:8080',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api\/chat/, '/v1/chat/completions'),
+            secure: false,
           },
         },
       },

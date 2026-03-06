@@ -3,7 +3,8 @@ import { Gallery } from './components/Gallery';
 import { DropArea } from './components/DropArea';
 import { ShowcaseCarousel } from './components/ShowcaseCarousel';
 import { ImageAsset, GenerationStatus } from './types';
-import { generateStyledPottery, urlToBase64 } from './services/styleTransferService';
+import { generateStyledPottery, urlToBase64, checkHealth, getServerStatus } from './services/styleTransferService';
+import { analyzeImage } from './services/chatService';
 import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import { ExclamationCircleIcon, AdjustmentsHorizontalIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import html2canvas from 'html2canvas';
@@ -25,13 +26,27 @@ function App() {
   const [isExportingPoster, setIsExportingPoster] = useState(false);
   const [posterError, setPosterError] = useState<string | null>(null);
 
+  // AI 鉴赏状态
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
+
   // Advanced generation params
-  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.8);
-  const [controlNetWeight, setControlNetWeight] = useState(0.6);
-  const [denoisingStrength, setDenoisingStrength] = useState(0.75);
+  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.8623965819175479);
+  const [controlNetWeight, setControlNetWeight] = useState(1.2750838383836205);
+  const [denoisingStrength, setDenoisingStrength] = useState(0.5772099586959958);
+  const [guidanceScale, setGuidanceScale] = useState(7.644317172419102);
+  const [depthScale, setDepthScale] = useState(0.30006093436180586);
+
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [hasWarnedAdvanced, setHasWarnedAdvanced] = useState(false); // 是否已警告过参数修改
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+
+  // 服务器状态
+  const [serverOnline, setServerOnline] = useState<boolean | null>(null); // null=未知, true=在线, false=离线
+  const [modelsReady, setModelsReady] = useState(false);
+  const [serverStatusMsg, setServerStatusMsg] = useState<string | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const workbenchRef = useRef<HTMLDivElement>(null);
@@ -42,6 +57,15 @@ function App() {
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
   // Helper to handle file uploads
+  // Helpers for advanced params change
+  const handleParamChange = (setter: React.Dispatch<React.SetStateAction<number>>, value: number) => {
+    setter(value);
+    if (!hasWarnedAdvanced) {
+      alert("⚠️ 提示\n\n当前的默认参数（如风格强度、形态控制等）是我们使用 Optuna 优化在测试集上搜索出的最佳固定参数。\n\n改动这些参数大体会导致最终生成效果变差，请谨慎调节！");
+      setHasWarnedAdvanced(true);
+    }
+  };
+
   const handleFileUpload = (file: File, type: 'style' | 'content') => {
     // Validate file format
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -91,6 +115,18 @@ function App() {
 
     if (!styleSource || !contentSource) return;
 
+    // 检查服务器状态
+    if (serverOnline === false) {
+      setStatus('error');
+      setErrorMessage('推理服务器未启动，请先运行: python -m pipeline.server');
+      return;
+    }
+    if (serverOnline && !modelsReady) {
+      setStatus('error');
+      setErrorMessage('模型尚未加载完成，请等待服务就绪后再试');
+      return;
+    }
+
     setStatus('processing');
     setErrorMessage(null);
     setResultImage(null);
@@ -112,7 +148,15 @@ function App() {
       }
 
       // 2. Call Service
-      const generatedImage = await generateStyledPottery(styleBase64, contentBase64, ipAdapterWeight, controlNetWeight, denoisingStrength);
+      const generatedImage = await generateStyledPottery(
+        styleBase64, 
+        contentBase64, 
+        ipAdapterWeight, 
+        controlNetWeight, 
+        denoisingStrength,
+        guidanceScale,
+        depthScale
+      );
       setResultImage(generatedImage);
       setStatus('success');
     } catch (error: any) {
@@ -128,6 +172,41 @@ function App() {
       resultRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [status]);
+
+  // 启动时检测服务器状态，并定期轮询
+  useEffect(() => {
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const alive = await checkHealth();
+        if (cancelled) return;
+        setServerOnline(alive);
+        if (alive) {
+          const st = await getServerStatus();
+          if (cancelled) return;
+          setModelsReady(st.models_ready);
+          if (st.loading) {
+            setServerStatusMsg('模型正在加载中...');
+          } else if (st.error) {
+            setServerStatusMsg(`模型加载失败: ${st.error}`);
+          } else if (st.models_ready) {
+            setServerStatusMsg(null);
+          }
+        } else {
+          setModelsReady(false);
+          setServerStatusMsg('推理服务器未启动');
+        }
+      } catch {
+        if (cancelled) return;
+        setServerOnline(false);
+        setModelsReady(false);
+        setServerStatusMsg('推理服务器未启动');
+      }
+    };
+    poll();
+    const timer = setInterval(poll, 10000); // 每 10 秒轮询一次
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
 
   // Elapsed time counter during processing
   useEffect(() => {
@@ -167,6 +246,35 @@ function App() {
   };
 
   const canGenerate = (uploadedStyle || selectedStyle) && (uploadedContent || selectedContent) && status !== 'processing';
+
+  // AI 鉴赏调用
+  const handleAiAnalysis = async () => {
+    if (!resultImage || aiAnalysisLoading) return;
+    setAiAnalysisLoading(true);
+    setAiAnalysisError(null);
+    setAiAnalysis(null);
+    try {
+      // 从 resultImage 提取 base64
+      let base64Data = '';
+      if (resultImage.startsWith('data:')) {
+        base64Data = resultImage.split(',')[1];
+      } else {
+        // 如果是 URL (如 /images/xxx.png)，先转换
+        const dataUrl = await urlToBase64(resultImage);
+        base64Data = dataUrl.split(',')[1];
+      }
+      const response = await analyzeImage(
+        base64Data,
+        `请鉴赏这件由AI修复的陶瓷器物。它由"${selectedStyle?.title || '未知碎片'}"的纹饰风格与"${selectedContent?.title || '未知器型'}"的器型融合而成。请从器形、釉色、纹饰三个方面进行专业点评，约150字。`
+      );
+      setAiAnalysis(response);
+    } catch (err: any) {
+      console.error('AI Analysis Error:', err);
+      setAiAnalysisError(err.message || 'AI 鉴赏请求失败');
+    } finally {
+      setAiAnalysisLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen pb-20 relative">
@@ -309,6 +417,17 @@ function App() {
                    {status === 'processing' ? '锻造中...' : '开始铸造'}
                  </span>
 
+                 {/* 服务器状态提示 */}
+                 {serverOnline === false && (
+                   <span className="text-[10px] text-red-500 text-center leading-tight">⚠ 推理服务器离线</span>
+                 )}
+                 {serverOnline && !modelsReady && serverStatusMsg && (
+                   <span className="text-[10px] text-amber-500 text-center leading-tight animate-pulse">{serverStatusMsg}</span>
+                 )}
+                 {serverOnline && modelsReady && (
+                   <span className="text-[10px] text-emerald-500 text-center">● 服务就绪</span>
+                 )}
+
                  {/* Advanced Settings Toggle */}
                  <button
                    onClick={() => setShowAdvanced(!showAdvanced)}
@@ -339,54 +458,93 @@ function App() {
             {showAdvanced && (
               <div className="mt-8 pt-6 border-t border-clay-200 relative z-10 animate-fade-in">
                 <h4 className="text-sm font-serif text-clay-900 italic mb-4 text-center">高级参数调节</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
+                <div className="text-center mb-6 text-xs text-amber-600 bg-amber-50 p-2 rounded-md max-w-lg mx-auto border border-amber-200">
+                  ⚠️ 提示: 当前默认值为程序已调优的最佳参数组合，非必要请勿修改，否则可能显著降低生成效果。
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-xs text-clay-600 font-medium">风格强度</label>
-                      <span className="text-xs text-indigo-dye font-mono font-bold">{ipAdapterWeight.toFixed(2)}</span>
-                    </div>
-                    <input
-                      type="range" min="0" max="1" step="0.05"
-                      value={ipAdapterWeight}
-                      onChange={(e) => setIpAdapterWeight(parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
-                    />
-                    <p className="text-[10px] text-clay-400">控制纹饰纹理的迁移程度</p>
-                    {(ipAdapterWeight < 0.5 || ipAdapterWeight > 0.9) && (
-                      <p className="text-[10px] text-amber-600 font-medium">⚠ 推荐范围 0.50–0.90，当前值可能导致效果不佳</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs text-clay-600 font-medium">形态控制</label>
-                      <span className="text-xs text-indigo-dye font-mono font-bold">{controlNetWeight.toFixed(2)}</span>
-                    </div>
-                    <input
-                      type="range" min="0" max="1" step="0.05"
-                      value={controlNetWeight}
-                      onChange={(e) => setControlNetWeight(parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
-                    />
-                    <p className="text-[10px] text-clay-400">控制器物轮廓的保持力度</p>
-                    {(controlNetWeight < 0.4 || controlNetWeight > 0.8) && (
-                      <p className="text-[10px] text-amber-600 font-medium">⚠ 推荐范围 0.40–0.80，当前值可能导致效果不佳</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs text-clay-600 font-medium">创意自由度</label>
+                      <label className="text-xs text-clay-600 font-medium">重绘强度 (Strength)</label>
                       <span className="text-xs text-indigo-dye font-mono font-bold">{denoisingStrength.toFixed(2)}</span>
                     </div>
                     <input
-                      type="range" min="0" max="1" step="0.05"
+                      type="range" min="0" max="1" step="0.01"
                       value={denoisingStrength}
-                      onChange={(e) => setDenoisingStrength(parseFloat(e.target.value))}
+                      onChange={(e) => handleParamChange(setDenoisingStrength, parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
                     />
-                    <p className="text-[10px] text-clay-400">越高越自由发挥，越低越保守</p>
-                    {(denoisingStrength < 0.5 || denoisingStrength > 0.85) && (
-                      <p className="text-[10px] text-amber-600 font-medium">⚠ 推荐范围 0.50–0.85，当前值可能导致效果不佳</p>
-                    )}
+                    <p className="text-[10px] text-clay-400">越高越高自由度，越低越保守</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs text-clay-600 font-medium">轮廓控制 (ControlNet)</label>
+                      <span className="text-xs text-indigo-dye font-mono font-bold">{controlNetWeight.toFixed(2)}</span>
+                    </div>
+                    <input
+                      type="range" min="0.5" max="2.0" step="0.01"
+                      value={controlNetWeight}
+                      onChange={(e) => handleParamChange(setControlNetWeight, parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
+                    />
+                    <p className="text-[10px] text-clay-400">控制器物边缘轮廓的保持力度</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs text-clay-600 font-medium">风格注入 (IP-Adapter)</label>
+                      <span className="text-xs text-indigo-dye font-mono font-bold">{ipAdapterWeight.toFixed(2)}</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="1.5" step="0.01"
+                      value={ipAdapterWeight}
+                      onChange={(e) => handleParamChange(setIpAdapterWeight, parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
+                    />
+                    <p className="text-[10px] text-clay-400">控制纹饰色彩风格的迁移程度</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs text-clay-600 font-medium">生成引导 (Guidance)</label>
+                      <span className="text-xs text-indigo-dye font-mono font-bold">{guidanceScale.toFixed(2)}</span>
+                    </div>
+                    <input
+                      type="range" min="1" max="15" step="0.1"
+                      value={guidanceScale}
+                      onChange={(e) => handleParamChange(setGuidanceScale, parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
+                    />
+                    <p className="text-[10px] text-clay-400">提示词和参考元素的引导强度</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs text-clay-600 font-medium">深度控制 (Depth)</label>
+                      <span className="text-xs text-indigo-dye font-mono font-bold">{depthScale.toFixed(2)}</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="1" step="0.01"
+                      value={depthScale}
+                      onChange={(e) => handleParamChange(setDepthScale, parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
+                    />
+                    <p className="text-[10px] text-clay-400">保持器物立体感和光影结构的权重</p>
+                  </div>
+                  
+                  <div className="flex items-center justify-center">
+                    <button 
+                      onClick={() => {
+                        setIpAdapterWeight(0.8623965819175479);
+                        setControlNetWeight(1.2750838383836205);
+                        setDenoisingStrength(0.5772099586959958);
+                        setGuidanceScale(7.644317172419102);
+                        setDepthScale(0.30006093436180586);
+                      }}
+                      className="text-xs py-2 px-4 rounded-md border border-clay-300 text-clay-600 hover:bg-clay-100 transition-colors"
+                    >
+                      恢复最佳预设
+                    </button>
                   </div>
                 </div>
               </div>
@@ -483,10 +641,34 @@ function App() {
                               <p className="text-sm font-medium">{selectedContent?.title || '自定义上传器型'}</p>
                             </div>
                             <div>
-                              <p className="text-xs text-clay-400 uppercase tracking-widest mb-1">AI 鉴赏</p>
-                              <p className="text-sm text-clay-600 font-light leading-relaxed italic">
-                                "跨越时空的对话。古老的纹理在现代器型上重新绽放，展现出独特的东方美学与数字艺术的完美交融。"
-                              </p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-xs text-clay-400 uppercase tracking-widest">AI 鉴赏</p>
+                                <button
+                                  onClick={handleAiAnalysis}
+                                  disabled={aiAnalysisLoading}
+                                  className="text-[10px] text-indigo-dye hover:text-indigo-900 font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
+                                >
+                                  {aiAnalysisLoading ? '分析中...' : (aiAnalysis ? '重新鉴赏' : '🔍 AI 鉴赏')}
+                                </button>
+                              </div>
+                              {aiAnalysisLoading && (
+                                <div className="flex items-center gap-2 py-2">
+                                  <ArrowPathIcon className="w-4 h-4 animate-spin text-indigo-dye" />
+                                  <p className="text-sm text-clay-500 italic">Qwen3-VL 正在鉴赏中...</p>
+                                </div>
+                              )}
+                              {aiAnalysisError && (
+                                <p className="text-sm text-red-500 italic">❌ {aiAnalysisError}</p>
+                              )}
+                              {aiAnalysis ? (
+                                <p className="text-sm text-clay-600 font-light leading-relaxed italic">
+                                  "{aiAnalysis}"
+                                </p>
+                              ) : !aiAnalysisLoading && !aiAnalysisError && (
+                                <p className="text-sm text-clay-400 font-light leading-relaxed italic">
+                                  点击「AI 鉴赏」，让 Qwen3-VL 为您的作品撰写专业点评
+                                </p>
+                              )}
                             </div>
                           </div>
 
