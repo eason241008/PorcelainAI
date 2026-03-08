@@ -13,15 +13,15 @@ import { MOCK_DATABASE, MOCK_RESTORATIONS } from './constants';
 
 function App() {
   // State for selections
-  const [selectedStyle, setSelectedStyle] = useState<ImageAsset | null>(MOCK_DATABASE.find(item => item.id === 'CZZ_0851') || null);
+  const [selectedStyle, setSelectedStyle] = useState<ImageAsset | null>(null);
   const [uploadedStyle, setUploadedStyle] = useState<string | null>(null);
   
-  const [selectedContent, setSelectedContent] = useState<ImageAsset | null>(MOCK_DATABASE.find(item => item.id === '3264') || null);
+  const [selectedContent, setSelectedContent] = useState<ImageAsset | null>(null);
   const [uploadedContent, setUploadedContent] = useState<string | null>(null);
 
   // State for generation
-  const [status, setStatus] = useState<GenerationStatus>('success');
-  const [resultImage, setResultImage] = useState<string | null>(MOCK_RESTORATIONS.find(item => item.id === 'res_3264')?.result || null);
+  const [status, setStatus] = useState<GenerationStatus>('idle');
+  const [resultImage, setResultImage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isExportingPoster, setIsExportingPoster] = useState(false);
   const [posterError, setPosterError] = useState<string | null>(null);
@@ -263,8 +263,27 @@ function App() {
         const dataUrl = await urlToBase64(resultImage);
         base64Data = dataUrl.split(',')[1];
       }
+
+      // 获取风格图的 base64
+      let styleBase64 = '';
+      if (uploadedStyle) {
+        styleBase64 = uploadedStyle.split(',')[1];
+      } else if (selectedStyle) {
+        styleBase64 = (await urlToBase64(selectedStyle.url)).split(',')[1];
+      }
+
+      // 获取内容图的 base64
+      let contentBase64 = '';
+      if (uploadedContent) {
+        contentBase64 = uploadedContent.split(',')[1];
+      } else if (selectedContent) {
+        contentBase64 = (await urlToBase64(selectedContent.url)).split(',')[1];
+      }
+
       const response = await analyzeImage(
         base64Data,
+        styleBase64,
+        contentBase64,
         `请鉴赏这件由AI修复的陶瓷器物。它由"${selectedStyle?.title || '未知碎片'}"的纹饰风格与"${selectedContent?.title || '未知器型'}"的器型融合而成。请从器形、釉色、纹饰三个方面进行专业点评，约150字。`
       );
       setAiAnalysis(response);
@@ -654,7 +673,7 @@ function App() {
                               {aiAnalysisLoading && (
                                 <div className="flex items-center gap-2 py-2">
                                   <ArrowPathIcon className="w-4 h-4 animate-spin text-indigo-dye" />
-                                  <p className="text-sm text-clay-500 italic">Qwen3-VL 正在鉴赏中...</p>
+                                  <p className="text-sm text-clay-500 italic">Qwen3.5 正在鉴赏中...</p>
                                 </div>
                               )}
                               {aiAnalysisError && (
@@ -666,7 +685,7 @@ function App() {
                                 </p>
                               ) : !aiAnalysisLoading && !aiAnalysisError && (
                                 <p className="text-sm text-clay-400 font-light leading-relaxed italic">
-                                  点击「AI 鉴赏」，让 Qwen3-VL 为您的作品撰写专业点评
+                                  点击「AI 鉴赏」，让 Qwen3.5 为您的作品撰写专业点评
                                 </p>
                               )}
                             </div>
