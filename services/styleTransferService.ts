@@ -11,7 +11,6 @@ export interface StyleTransferRequest {
   controlNetWeight?: number;
   denoisingStrength?: number;
   guidanceScale?: number;
-  depthScale?: number;
 }
 
 export interface StyleTransferResponse {
@@ -114,11 +113,10 @@ export const waitForModelsReady = async (
 export const generateStyledPottery = async (
   styleImage: string,
   contentImage: string,
-  ipAdapterWeight: number = 0.8623965819175479,
-  controlNetWeight: number = 1.2750838383836205,
-  denoisingStrength: number = 0.5772099586959958,
-  guidanceScale: number = 7.644317172419102,
-  depthScale: number = 0.30006093436180586
+  ipAdapterWeight: number = 0.8369408449179724,
+  controlNetWeight: number = 1.1343806084802035,
+  denoisingStrength: number = 0.6889909754005737,
+  guidanceScale: number = 6.008849466755117
 ): Promise<string> => {
   const payload: StyleTransferRequest = {
     styleImage,
@@ -127,7 +125,6 @@ export const generateStyledPottery = async (
     controlNetWeight,
     denoisingStrength,
     guidanceScale,
-    depthScale,
   };
 
   // 推理可能耗时较长（30s-120s），使用 5 分钟超时

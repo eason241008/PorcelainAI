@@ -32,11 +32,10 @@ function App() {
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
   // Advanced generation params
-  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.8623965819175479);
-  const [controlNetWeight, setControlNetWeight] = useState(1.2750838383836205);
-  const [denoisingStrength, setDenoisingStrength] = useState(0.5772099586959958);
-  const [guidanceScale, setGuidanceScale] = useState(7.644317172419102);
-  const [depthScale, setDepthScale] = useState(0.30006093436180586);
+  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.8369408449179724);
+  const [controlNetWeight, setControlNetWeight] = useState(1.1343806084802035);
+  const [denoisingStrength, setDenoisingStrength] = useState(0.6889909754005737);
+  const [guidanceScale, setGuidanceScale] = useState(6.008849466755117);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hasWarnedAdvanced, setHasWarnedAdvanced] = useState(false); // 是否已警告过参数修改
@@ -55,6 +54,10 @@ function App() {
   // File validation constants
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+  // 去除文件名中的数字前缀，例如 "1071742_白瓷罐" → "白瓷罐"
+  const cleanTitle = (title: string | undefined, fallback: string) =>
+    title ? title.replace(/^\d+_/, '') : fallback;
 
   // Helper to handle file uploads
   // Helpers for advanced params change
@@ -90,8 +93,6 @@ function App() {
         setUploadedContent(result);
         setSelectedContent(null);
       }
-      // Auto scroll to workbench when interaction starts
-      workbenchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
     reader.readAsDataURL(file);
   };
@@ -105,7 +106,6 @@ function App() {
       setSelectedContent(asset);
       setUploadedContent(null);
     }
-    workbenchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   // Main Generation Logic
@@ -130,6 +130,8 @@ function App() {
     setStatus('processing');
     setErrorMessage(null);
     setResultImage(null);
+    setAiAnalysis(null);
+    setAiAnalysisError(null);
 
     try {
       // 1. Prepare Base64 Data
@@ -149,13 +151,12 @@ function App() {
 
       // 2. Call Service
       const generatedImage = await generateStyledPottery(
-        styleBase64, 
-        contentBase64, 
-        ipAdapterWeight, 
-        controlNetWeight, 
+        styleBase64,
+        contentBase64,
+        ipAdapterWeight,
+        controlNetWeight,
         denoisingStrength,
-        guidanceScale,
-        depthScale
+        guidanceScale
       );
       setResultImage(generatedImage);
       setStatus('success');
@@ -166,12 +167,7 @@ function App() {
     }
   };
 
-  // Scroll to result on success
-  useEffect(() => {
-    if (status === 'success' && resultRef.current) {
-      resultRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [status]);
+
 
   // 启动时检测服务器状态，并定期轮询
   useEffect(() => {
@@ -284,7 +280,7 @@ function App() {
         base64Data,
         styleBase64,
         contentBase64,
-        `请鉴赏这件由AI修复的陶瓷器物。它由"${selectedStyle?.title || '未知碎片'}"的纹饰风格与"${selectedContent?.title || '未知器型'}"的器型融合而成。请从器形、釉色、纹饰三个方面进行专业点评，约150字。`
+        `请为这件器物撰写古风展览名片。【图1】器形来源：${cleanTitle(selectedStyle?.title, '未知碎片')}；【图2】胎釉纹饰来源（宝墩陶片）：${cleanTitle(selectedContent?.title, '未知器型')}；【图3】为最终呈现的完整器物，请以此为鉴赏主体。`
       );
       setAiAnalysis(response);
     } catch (err: any) {
@@ -537,28 +533,13 @@ function App() {
                     <p className="text-[10px] text-clay-400">提示词和参考元素的引导强度</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs text-clay-600 font-medium">深度控制 (Depth)</label>
-                      <span className="text-xs text-indigo-dye font-mono font-bold">{depthScale.toFixed(2)}</span>
-                    </div>
-                    <input
-                      type="range" min="0" max="1" step="0.01"
-                      value={depthScale}
-                      onChange={(e) => handleParamChange(setDepthScale, parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-clay-200 rounded-full appearance-none cursor-pointer accent-indigo-dye"
-                    />
-                    <p className="text-[10px] text-clay-400">保持器物立体感和光影结构的权重</p>
-                  </div>
-                  
                   <div className="flex items-center justify-center">
                     <button 
                       onClick={() => {
-                        setIpAdapterWeight(0.8623965819175479);
-                        setControlNetWeight(1.2750838383836205);
-                        setDenoisingStrength(0.5772099586959958);
-                        setGuidanceScale(7.644317172419102);
-                        setDepthScale(0.30006093436180586);
+                        setIpAdapterWeight(0.8369408449179724);
+                        setControlNetWeight(1.1343806084802035);
+                        setDenoisingStrength(0.6889909754005737);
+                        setGuidanceScale(6.008849466755117);
                       }}
                       className="text-xs py-2 px-4 rounded-md border border-clay-300 text-clay-600 hover:bg-clay-100 transition-colors"
                     >
@@ -644,54 +625,73 @@ function App() {
                           <div className="border-b border-clay-200 pb-4 mb-6">
                             <p className="text-xs text-indigo-dye font-bold tracking-[0.3em] uppercase mb-2">AI 典藏名片</p>
                             <h4 className="text-2xl font-serif text-clay-900">
-                              {selectedStyle?.title || '未知纹理'} 
-                              <span className="mx-2 text-clay-300">×</span> 
-                              {selectedContent?.title || '未知器型'}
+                              {cleanTitle(selectedStyle?.title, '未知纹理')}
+                              <span className="mx-2 text-clay-300">×</span>
+                              {cleanTitle(selectedContent?.title, '未知器型')}
                             </h4>
                           </div>
 
                           <div className="space-y-4 mb-8">
                             <div>
                               <p className="text-xs text-clay-400 uppercase tracking-widest mb-1">纹饰溯源</p>
-                              <p className="text-sm font-medium">{selectedStyle?.title || '自定义上传纹理'}</p>
+                              <p className="text-sm font-medium">{cleanTitle(selectedStyle?.title, '自定义上传纹理')}</p>
                             </div>
                             <div>
                               <p className="text-xs text-clay-400 uppercase tracking-widest mb-1">器物形态</p>
-                              <p className="text-sm font-medium">{selectedContent?.title || '自定义上传器型'}</p>
+                              <p className="text-sm font-medium">{cleanTitle(selectedContent?.title, '自定义上传器型')}</p>
                             </div>
-                            <div>
-                              <div className="flex items-center justify-between mb-1">
-                                <p className="text-xs text-clay-400 uppercase tracking-widest">AI 鉴赏</p>
-                                <button
-                                  onClick={handleAiAnalysis}
-                                  disabled={aiAnalysisLoading}
-                                  className="text-[10px] text-indigo-dye hover:text-indigo-900 font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
-                                >
-                                  {aiAnalysisLoading ? '分析中...' : (aiAnalysis ? '重新鉴赏' : '🔍 AI 鉴赏')}
-                                </button>
+                            {/* AI 鉴赏内容直接嵌入名片，与其他字段字体保持一致 */}
+                            {(aiAnalysis || aiAnalysisLoading || aiAnalysisError) && (
+                              <div>
+                                <p className="text-xs text-clay-400 uppercase tracking-widest mb-2">AI 鉴赏</p>
+                                {aiAnalysisLoading && (
+                                  <div className="flex items-center gap-2 py-1">
+                                    <ArrowPathIcon className="w-4 h-4 animate-spin text-indigo-dye" />
+                                    <p className="text-sm text-clay-500 italic">Qwen3-VL 正在撰写展览名片...</p>
+                                  </div>
+                                )}
+                                {aiAnalysisError && (
+                                  <p className="text-sm text-red-500 italic">❌ {aiAnalysisError}</p>
+                                )}
+                                {aiAnalysis && (
+                                  <div className="text-sm text-clay-700 leading-relaxed space-y-3">
+                                    {aiAnalysis
+                                      .split(/\n+/)
+                                      .map((line, i) => {
+                                        const isHeader = /^【.+】$/.test(line.trim());
+                                        if (!line.trim()) return null;
+                                        return isHeader ? (
+                                          <p key={i} className="font-bold text-indigo-dye tracking-wide mt-3 first:mt-0">{line.trim()}</p>
+                                        ) : (
+                                          <p key={i} className="font-light indent-4">{line.trim()}</p>
+                                        );
+                                      })}
+                                  </div>
+                                )}
                               </div>
-                              {aiAnalysisLoading && (
-                                <div className="flex items-center gap-2 py-2">
-                                  <ArrowPathIcon className="w-4 h-4 animate-spin text-indigo-dye" />
-                                  <p className="text-sm text-clay-500 italic">Qwen3.5 正在鉴赏中...</p>
-                                </div>
-                              )}
-                              {aiAnalysisError && (
-                                <p className="text-sm text-red-500 italic">❌ {aiAnalysisError}</p>
-                              )}
-                              {aiAnalysis ? (
-                                <p className="text-sm text-clay-600 font-light leading-relaxed italic">
-                                  "{aiAnalysis}"
-                                </p>
-                              ) : !aiAnalysisLoading && !aiAnalysisError && (
-                                <p className="text-sm text-clay-400 font-light leading-relaxed italic">
-                                  点击「AI 鉴赏」，让 Qwen3.5 为您的作品撰写专业点评
-                                </p>
-                              )}
-                            </div>
+                            )}
                           </div>
 
-                          <div className="flex items-center justify-between pt-6 border-t border-clay-100">
+                          <div className="border-t border-clay-100" />
+
+                          <div className="flex items-center justify-center py-3">
+                            {/* 重新鉴赏 / AI 鉴赏按钮，两线之间水平垂直居中 */}
+                            <button
+                              onClick={handleAiAnalysis}
+                              disabled={aiAnalysisLoading}
+                              className="flex items-center gap-2 text-xs text-indigo-dye hover:text-indigo-900 font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
+                            >
+                              {aiAnalysisLoading ? (
+                                <><ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />分析中...</>
+                              ) : aiAnalysis ? (
+                                <><ArrowPathIcon className="w-3.5 h-3.5" />重新鉴赏</>
+                              ) : (
+                                <>🔍 AI 鉴赏</>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-4 border-t border-clay-100">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 bg-indigo-dye text-white font-serif text-xs flex items-center justify-center rounded-sm">P</div>
                               <span className="text-xs font-bold tracking-widest text-clay-900">PorcelainAI</span>
