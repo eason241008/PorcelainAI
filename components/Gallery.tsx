@@ -17,6 +17,7 @@ export const Gallery: React.FC<GalleryProps> = ({ onSelect, selectedIds }) => {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('fragment');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const showEraLabel = displayMode !== 'vessel';
 
   useEffect(() => {
     setCurrentPage(1);
@@ -137,9 +138,11 @@ export const Gallery: React.FC<GalleryProps> = ({ onSelect, selectedIds }) => {
               <h4 className="font-serif text-clay-900 text-sm font-medium group-hover:text-indigo-dye transition-colors truncate">
                 {asset.title}
               </h4>
-              <p className="text-[10px] text-clay-400 mt-0.5 uppercase tracking-wider">
-                {asset.era || '未知年代'}
-              </p>
+              {showEraLabel && (
+                <p className="text-[10px] text-clay-400 mt-0.5 uppercase tracking-wider">
+                  {asset.era || '未知年代'}
+                </p>
+              )}
             </div>
             
             {/* Selection Checkmark */}

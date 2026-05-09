@@ -1,6 +1,38 @@
 import { ImageAsset } from './types';
 import { npmVessels } from './npm_vessels';
 
+const normalizeVesselTitle = (title: string) => title.replace(/^\d+_/, '').trim();
+
+const normalizeVesselEra = (era?: string) => {
+  if (!era) {
+    return undefined;
+  }
+
+  const normalizedEra = era.trim();
+  return normalizedEra === '古代' ? undefined : normalizedEra;
+};
+
+const normalizedNpmVessels: ImageAsset[] = npmVessels.map((asset) => ({
+  ...asset,
+  title: normalizeVesselTitle(asset.title),
+  era: normalizeVesselEra(asset.era),
+}));
+
+const dedupeVesselsByTitle = (assets: ImageAsset[]) => {
+  const seenTitles = new Set<string>();
+
+  return assets.filter((asset) => {
+    if (seenTitles.has(asset.title)) {
+      return false;
+    }
+
+    seenTitles.add(asset.title);
+    return true;
+  });
+};
+
+const uniqueNpmVessels = dedupeVesselsByTitle(normalizedNpmVessels);
+
 // ========================================================================
 // 1. 数据库：包含所有独立的“碎片（风格）”和“器型（内容）”
 // ========================================================================
@@ -49,7 +81,7 @@ const _MOCK_DATABASE: ImageAsset[] = [
 
 ];
 
-export const MOCK_DATABASE: ImageAsset[] = [..._MOCK_DATABASE, ...npmVessels];
+export const MOCK_DATABASE: ImageAsset[] = [..._MOCK_DATABASE, ...uniqueNpmVessels];
 
 // ========================================================================
 // 2. 修复成果：包含生成图、对应的原图、风格图以及评价指标
