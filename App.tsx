@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Gallery } from './components/Gallery';
 import { DropArea } from './components/DropArea';
 import { ShowcaseCarousel } from './components/ShowcaseCarousel';
-import { ImageAsset, GenerationStatus } from './types';
+import { DeleteVesselResponse, ImageAsset, GenerationStatus } from './types';
 import { generateStyledPottery, urlToBase64, checkHealth, getServerStatus } from './services/styleTransferService';
 import { analyzeImage } from './services/chatService';
 import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
@@ -32,10 +32,10 @@ function App() {
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
   // Advanced generation params
-  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.8369408449179724);
-  const [controlNetWeight, setControlNetWeight] = useState(1.1343806084802035);
-  const [denoisingStrength, setDenoisingStrength] = useState(0.6889909754005737);
-  const [guidanceScale, setGuidanceScale] = useState(6.008849466755117);
+  const [ipAdapterWeight, setIpAdapterWeight] = useState(1.0010047857781077);
+  const [controlNetWeight, setControlNetWeight] = useState(0.9082318112908826);
+  const [denoisingStrength, setDenoisingStrength] = useState(0.6709403588828577);
+  const [guidanceScale, setGuidanceScale] = useState(7.007471025324963);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hasWarnedAdvanced, setHasWarnedAdvanced] = useState(false); // 是否已警告过参数修改
@@ -46,6 +46,7 @@ function App() {
   const [serverOnline, setServerOnline] = useState<boolean | null>(null); // null=未知, true=在线, false=离线
   const [modelsReady, setModelsReady] = useState(false);
   const [serverStatusMsg, setServerStatusMsg] = useState<string | null>(null);
+  const [deletedVesselIds, setDeletedVesselIds] = useState<string[]>([]);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const workbenchRef = useRef<HTMLDivElement>(null);
@@ -105,6 +106,33 @@ function App() {
     } else {
       setSelectedContent(asset);
       setUploadedContent(null);
+    }
+  };
+
+  const handleDeleteVessels = async (assets: ImageAsset[]) => {
+    const ids = assets.map((asset) => asset.id);
+    const response = await fetch('/api/delete-vessel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids }),
+    });
+
+    const payload = await response.json() as DeleteVesselResponse;
+
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || '删除器皿失败');
+    }
+
+    setDeletedVesselIds((current) => {
+      const next = new Set(current);
+      ids.forEach((id) => next.add(id));
+      return Array.from(next);
+    });
+
+    if (selectedContent?.id && ids.includes(selectedContent.id)) {
+      setSelectedContent(null);
     }
   };
 
@@ -169,9 +197,10 @@ function App() {
 
 
 
-  // 启动时检测服务器状态，并定期轮询
+  // 启动时检测服务器状态；空闲时低频轮询，生成中暂停轮询，避免打断主推理任务
   useEffect(() => {
     let cancelled = false;
+
     const poll = async () => {
       try {
         const alive = await checkHealth();
@@ -199,10 +228,16 @@ function App() {
         setServerStatusMsg('推理服务器未启动');
       }
     };
+
     poll();
-    const timer = setInterval(poll, 10000); // 每 10 秒轮询一次
+
+    if (status === 'processing') {
+      return () => { cancelled = true; };
+    }
+
+    const timer = setInterval(poll, 60000);
     return () => { cancelled = true; clearInterval(timer); };
-  }, []);
+  }, [status]);
 
   // Elapsed time counter during processing
   useEffect(() => {
@@ -536,10 +571,10 @@ function App() {
                   <div className="flex items-center justify-center">
                     <button 
                       onClick={() => {
-                        setIpAdapterWeight(0.8369408449179724);
-                        setControlNetWeight(1.1343806084802035);
-                        setDenoisingStrength(0.6889909754005737);
-                        setGuidanceScale(6.008849466755117);
+                        setIpAdapterWeight(1.0010047857781077);
+                        setControlNetWeight(0.9082318112908826);
+                        setDenoisingStrength(0.6709403588828577);
+                        setGuidanceScale(7.007471025324963);
                       }}
                       className="text-xs py-2 px-4 rounded-md border border-clay-300 text-clay-600 hover:bg-clay-100 transition-colors"
                     >
@@ -739,6 +774,8 @@ function App() {
           <Gallery 
             onSelect={handleGallerySelect} 
             selectedIds={[selectedStyle?.id, selectedContent?.id].filter(Boolean) as string[]}
+            onDeleteVessels={handleDeleteVessels}
+            hiddenAssetIds={deletedVesselIds}
           />
         </div>
 

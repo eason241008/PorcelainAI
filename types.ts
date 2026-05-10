@@ -8,6 +8,14 @@ export interface ImageAsset {
   material?: string;
 }
 
+export interface DeleteVesselResponse {
+  success: boolean;
+  removedId?: string;
+  removedIds?: string[];
+  remainingCount?: number;
+  message?: string;
+}
+
 export type GenerationStatus = 'idle' | 'processing' | 'success' | 'error';
 
 export interface StyleTransferRequest {
