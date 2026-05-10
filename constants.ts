@@ -1,34 +1,89 @@
 import { ImageAsset } from './types';
 import { npmVessels } from './npm_vessels';
 
+const STYLE_NAME_MAP: Record<string, string> = {
+  CZZ_0877: '碎片 - 紫竹',
+  DGS_1919: '碎片 - 高山',
+  JXF_0203: '碎片 - 幸福桥',
+  DMC_0443: '碎片 - 芒城',
+  DMC_0895: '碎片 - 芒城',
+  GHZ0089: '碎片 - 合作',
+  GHZ0215: '碎片 - 合作',
+  GLH_0157: '碎片 - 联合',
+  GLH_0751: '碎片 - 联合',
+  GSX_0567: '碎片 - 三星堆',
+  GSX_1965: '碎片 - 三星堆',
+  JSM_1749: '碎片 - 石门坎',
+  JSM_6659: '碎片 - 石门坎',
+  JXF_0113: '碎片 - 幸福桥',
+  JZY_0141: '碎片 - 中医院',
+  JZY_0217: '碎片 - 中医院',
+  PGC_0029: '碎片 - 郫都',
+  DGS_1309: '碎片 - 高山',
+  PGC_0031: '碎片 - 郫都',
+  CZZ_0851: '碎片 - 紫竹',
+  PJQ0141: '碎片 - 姜桥村',
+  PJQ0529: '碎片 - 姜桥村',
+  QKH0135: '碎片 - 康和',
+  QKH0221: '碎片 - 康和',
+  QSX_0161: '碎片 - 三星村',
+  QSX_0409: '碎片 - 三星村',
+  SGY_0133: '碎片 - 桂圆桥',
+  SGY_0233: '碎片 - 桂圆桥',
+  SK4_0086: '碎片 - 三星堆K4',
+  SK4_1299: '碎片 - 三星堆K4',
+  WCX0033: '碎片 - 川西营',
+  WCX0057: '碎片 - 川西营',
+  WYF_0147: '碎片 - 鱼凫村',
+  WYF_1037: '碎片 - 鱼凫村',
+  WYF_2179: '碎片 - 鱼凫村2',
+  WYF_2205: '碎片 - 鱼凫村2',
+  XBD_0299: '碎片 - 古遗址宝墩',
+  XBD_0309: '碎片 - 古遗址宝墩',
+  XCJ_0083: '碎片 - 朱家村',
+  XCJ_0219: '碎片 - 朱家村',
+};
+
+const cleanRestorationContentTitle = (title: string) => title.replace(/^\d+_/, '').replace(/_/g, ' ').trim();
+
+const formatRestorationTitle = (rawTitle: string) => {
+  const match = rawTitle.match(/^生成展示\s+(.+?)\s+\+\s+([A-Z0-9_]+)$/);
+  if (!match) {
+    return rawTitle;
+  }
+
+  const [, contentTitle, styleCode] = match;
+  const styleName = STYLE_NAME_MAP[styleCode] || styleCode;
+  return `${cleanRestorationContentTitle(contentTitle)} + ${styleName}`;
+};
+
 // ========================================================================
 // 1. 数据库：包含所有独立的“碎片（风格）”和“器型（内容）”
 // ========================================================================
 const _MOCK_DATABASE: ImageAsset[] = [
   // --- Fragments (Style Sources / 风格来源) ---
-  { id: 'CZZ_0851', url: '/images/style/CZZ_0851.png', title: '碎片 - 紫竹', description: '古陶瓷纹理样本', type: 'fragment', era: '紫竹', material: '瓷' },
   { id: 'CZZ_0877', url: '/images/style/CZZ_0877.png', title: '碎片 - 紫竹', description: '古陶瓷纹理样本', type: 'fragment', era: '紫竹', material: '瓷' },
-  { id: 'DGS_1309', url: '/images/style/DGS_1309.png', title: '碎片 - 高山', description: '古陶瓷纹理样本', type: 'fragment', era: '高山', material: '瓷' },
   { id: 'DGS_1919', url: '/images/style/DGS_1919.png', title: '碎片 - 高山', description: '古陶瓷纹理样本', type: 'fragment', era: '高山', material: '瓷' },
-  { id: 'DMC_0443', url: '/images/style/DMC_0443.png', title: '碎片 - 芒城', description: '古陶瓷纹理样本', type: 'fragment', era: '芒城', material: '瓷' },
+  { id: 'JXF_0203', url: '/images/style/JXF_0203.png', title: '碎片 - 幸福桥', description: '古陶瓷纹理样本', type: 'fragment', era: '幸福桥', material: '瓷' },
   { id: 'DMC_0895', url: '/images/style/DMC_0895.png', title: '碎片 - 芒城', description: '古陶瓷纹理样本', type: 'fragment', era: '芒城', material: '瓷' },
   { id: 'GHZ0089', url: '/images/style/GHZ0089.png', title: '碎片 - 合作', description: '古陶瓷纹理样本', type: 'fragment', era: '合作', material: '瓷' },
   { id: 'GHZ0215', url: '/images/style/GHZ0215.png', title: '碎片 - 合作', description: '古陶瓷纹理样本', type: 'fragment', era: '合作', material: '瓷' },
   { id: 'GLH_0157', url: '/images/style/GLH_0157.png', title: '碎片 - 联合', description: '古陶瓷纹理样本', type: 'fragment', era: '联合', material: '瓷' },
   { id: 'GLH_0751', url: '/images/style/GLH_0751.png', title: '碎片 - 联合', description: '古陶瓷纹理样本', type: 'fragment', era: '联合', material: '瓷' },
-  { id: 'GSX_0567', url: '/images/style/GSX_0567.png', title: '碎片 - 三星堆', description: '古陶瓷纹理样本', type: 'fragment', era: '三星堆', material: '瓷' },
-  { id: 'GSX_1965', url: '/images/style/GSX_1965.png', title: '碎片 - 三星堆', description: '古陶瓷纹理样本', type: 'fragment', era: '三星堆', material: '瓷' },
+
+  { id: 'CZZ_0851', url: '/images/style/CZZ_0851.png', title: '碎片 - 紫竹', description: '古陶瓷纹理样本', type: 'fragment', era: '紫竹', material: '瓷' },
   { id: 'JSM_1749', url: '/images/style/JSM_1749.png', title: '碎片 - 石门坎', description: '古陶瓷纹理样本', type: 'fragment', era: '石门坎', material: '瓷' },
   { id: 'JSM_6659', url: '/images/style/JSM_6659.png', title: '碎片 - 石门坎', description: '古陶瓷纹理样本', type: 'fragment', era: '石门坎', material: '瓷' },
   { id: 'JXF_0113', url: '/images/style/JXF_0113.png', title: '碎片 - 幸福桥', description: '古陶瓷纹理样本', type: 'fragment', era: '幸福桥', material: '瓷' },
-  { id: 'JXF_0203', url: '/images/style/JXF_0203.png', title: '碎片 - 幸福桥', description: '古陶瓷纹理样本', type: 'fragment', era: '幸福桥', material: '瓷' },
   { id: 'JZY_0141', url: '/images/style/JZY_0141.png', title: '碎片 - 中医院', description: '古陶瓷纹理样本', type: 'fragment', era: '中医院', material: '瓷' },
   { id: 'JZY_0217', url: '/images/style/JZY_0217.png', title: '碎片 - 中医院', description: '古陶瓷纹理样本', type: 'fragment', era: '中医院', material: '瓷' },
   { id: 'PGC_0029', url: '/images/style/PGC_0029.png', title: '碎片 - 郫都', description: '古陶瓷纹理样本', type: 'fragment', era: '郫都', material: '瓷' },
   { id: 'PGC_0031', url: '/images/style/PGC_0031.png', title: '碎片 - 郫都', description: '古陶瓷纹理样本', type: 'fragment', era: '郫都', material: '瓷' },
   { id: 'PJQ0141', url: '/images/style/PJQ0141.png', title: '碎片 - 姜桥村', description: '古陶瓷纹理样本', type: 'fragment', era: '姜桥村', material: '瓷' },
+  { id: 'DMC_0443', url: '/images/style/DMC_0443.png', title: '碎片 - 芒城', description: '古陶瓷纹理样本', type: 'fragment', era: '芒城', material: '瓷' },
   { id: 'PJQ0529', url: '/images/style/PJQ0529.png', title: '碎片 - 姜桥村', description: '古陶瓷纹理样本', type: 'fragment', era: '姜桥村', material: '瓷' },
   { id: 'QKH0135', url: '/images/style/QKH0135.png', title: '碎片 - 康和', description: '古陶瓷纹理样本', type: 'fragment', era: '康和', material: '瓷' },
+  { id: 'DGS_1309', url: '/images/style/DGS_1309.png', title: '碎片 - 高山', description: '古陶瓷纹理样本', type: 'fragment', era: '高山', material: '瓷' },
   { id: 'QKH0221', url: '/images/style/QKH0221.png', title: '碎片 - 康和', description: '古陶瓷纹理样本', type: 'fragment', era: '康和', material: '瓷' },
   { id: 'QSX_0161', url: '/images/style/QSX_0161.png', title: '碎片 - 三星村', description: '古陶瓷纹理样本', type: 'fragment', era: '三星村', material: '瓷' },
   { id: 'QSX_0409', url: '/images/style/QSX_0409.png', title: '碎片 - 三星村', description: '古陶瓷纹理样本', type: 'fragment', era: '三星村', material: '瓷' },
@@ -46,7 +101,8 @@ const _MOCK_DATABASE: ImageAsset[] = [
   { id: 'XBD_0309', url: '/images/style/XBD_0309.png', title: '碎片 - 古遗址宝墩', description: '古陶瓷纹理样本', type: 'fragment', era: '古遗址宝墩', material: '瓷' },
   { id: 'XCJ_0083', url: '/images/style/XCJ_0083.png', title: '碎片 - 朱家村', description: '古陶瓷纹理样本', type: 'fragment', era: '朱家村', material: '瓷' },
   { id: 'XCJ_0219', url: '/images/style/XCJ_0219.png', title: '碎片 - 朱家村', description: '古陶瓷纹理样本', type: 'fragment', era: '朱家村', material: '瓷' },
-
+ { id: 'GSX_0567', url: '/images/style/GSX_0567.png', title: '碎片 - 三星堆', description: '古陶瓷纹理样本', type: 'fragment', era: '三星堆', material: '瓷' },
+  { id: 'GSX_1965', url: '/images/style/GSX_1965.png', title: '碎片 - 三星堆', description: '古陶瓷纹理样本', type: 'fragment', era: '三星堆', material: '瓷' },
 ];
 
 export const MOCK_DATABASE: ImageAsset[] = [..._MOCK_DATABASE, ...npmVessels];
@@ -139,4 +195,7 @@ export const MOCK_RESTORATIONS = [
     contentThumb: '/images/content/npm/0250_173510_三彩藍地番蓮紋花盆.jpg',
     title: '生成展示 173510_三彩藍地番蓮紋花盆 + XBD_0309',
   }
-];
+].map((item) => ({
+  ...item,
+  title: formatRestorationTitle(item.title),
+}));

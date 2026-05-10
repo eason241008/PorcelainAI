@@ -4,44 +4,49 @@
 const CHAT_API_URL = '/api/chat';
 const MODEL_NAME = 'qwen3-vl-8b';
 
-const SYSTEM_PROMPT = `# Role & Identity
-你是一位精通中国古代陶瓷鉴定的考古专家，也是博物馆策展人。你熟悉四川新石器时代至早期青铜时代（古蜀文明早期）的陶器特征。
-你的任务是：用简洁、温润、带有古风韵味的文字，为用户的器物图片撰写一段展览名片。语言通俗易懂，不晦涩，不堆砌辞藻。
+const SYSTEM_PROMPT = `# Role
+你是一名博物馆展签撰写者，擅长为文博展示撰写准确、简洁、清楚的说明文字。
 
-# Background Knowledge（重要背景）
-1. 名称中含"碎片-XX"（如"碎片-01"）的图片，均为出土自【四川宝墩建筑群遗址】的真实考古陶片，距今约4500至3700年，这仅是考古编号，并非器物上刻有文字。
-2. 用户会依次输入3张图片：
-   - 【图1】：器形参考。
-   - 【图2】：胎釉与纹饰参考（宝墩陶片），请仔细观察它的实际颜色、肌理与纹饰特征。
-   - 【图3】：最终完整器物，是鉴赏主体。
-3. 请将图3视为真实存在的古代器物，不要提及"AI生成"，不要质疑图片真实性。
+# Image Order
+用户将提供最多3张图像：
+- 图1：器型参考图
+- 图2：风格与纹饰参考图
+- 图3：最终展示对象（主要描述对象）
 
-# Constraints（约束）
-1. 每个板块不超过60字，语言简洁，平易近人，有温度感。
-2. 禁止使用"AI、算法、像素、生成"等现代词汇。
-3. 不要输出思考过程，直接给出正文。
-4. 【化生其肤 · 寻脉】中必须根据图2的视觉内容，具体描述其实际颜色（如红褐、灰黑、土黄等）和肌理特征，而非用模糊的泛化描述。
+# Task
+请围绕图3撰写适合博物馆场景的展签文字，并结合图1与图2说明其器型来源和视觉风格来源。
 
-# Output Structure（输出格式）
-严格按以下三个标题分块，每块一两句话：
+# Writing Rules
+1. 语言准确、克制、简洁，像博物馆展签或导览面板，不写散文，不抒情，不拟人。
+2. 优先描述图中可见特征，避免空泛评价。
+3. 不使用“AI、算法、生成、像素”等词。
+4. 不输出思考过程。
+5. 图1和图2只是参考来源，图3才是说明主体。
+6. 若判断不完全确定，使用“可见”“可辨”“呈现出”“应为”等稳妥表达。
+7. 不要在最终输出中出现“图1”“图2”“图3”字样；如需引用参考来源，请直接使用用户提供的名称。
+8. 不要输出独立标题行，不要输出类似“【某某器物的当代转译】”这样的首行概括标题。
+9. 不要在名称后额外添加“（碎片）”“（参考图）”“（器型）”等括号说明。
 
-【端正其骨 · 溯形】
-（一两句话描写图3的器型轮廓，如口沿、腹部、耳系等特征）
+# Output Format
+严格按以下结构输出：
 
-【化生其肤 · 寻脉】
-（一两句话描写图3的胎质肌理。必须结合图2的实际颜色与纹样，点名具体色调，指出与宝墩陶片的渊源）
+【器型特征】
+40-70字。根据图3并参考图1，描述口沿、腹部、足部、耳系、整体轮廓。
 
-【鉴赏寄语】
-（一两句话收尾，点出"大巧若拙"的意境）`;
+【釉色与纹饰】
+50-90字。根据图3并结合图2，描述主要色调、纹样、肌理和装饰分布。
+
+【风格来源说明】
+40-70字。说明图2中的哪些视觉特征被转移到了图3上。
+
+【展陈说明】
+30-60字。用博物馆说明口吻总结其展示重点。`;
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 }
 
-/**
- * 在浏览器端将 base64 图像缩放到最长边不超过 maxLongSide，
- */
 const resizeBase64Image = (
   base64: string,
   maxLongSide: number = 512
@@ -62,9 +67,11 @@ const resizeBase64Image = (
       canvas.width = newW;
       canvas.height = newH;
       const ctx = canvas.getContext('2d');
-      if (!ctx) { reject(new Error('canvas context unavailable')); return; }
+      if (!ctx) {
+        reject(new Error('canvas context unavailable'));
+        return;
+      }
       ctx.drawImage(img, 0, 0, newW, newH);
-      // 输出 JPEG 以大幅压缩 token 数量
       const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
       resolve(dataUrl.split(',')[1]);
     };
@@ -73,16 +80,31 @@ const resizeBase64Image = (
   });
 };
 
-/**
- * 向 Qwen3-VL 发送图片鉴赏请求（非流式）
- */
+const stripLeadingBracketTitle = (content: string): string => {
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (
+    lines.length > 0 &&
+    /^【.+】$/.test(lines[0]) &&
+    !['【器型特征】', '【釉色与纹饰】', '【风格来源说明】', '【展陈说明】'].includes(lines[0])
+  ) {
+    lines.shift();
+  }
+
+  return lines.join('\n\n');
+};
+
 export const analyzeImage = async (
   imageBase64: string,
   styleImageBase64?: string,
   contentImageBase64?: string,
-  userPrompt: string = '请鉴赏这件新生成的陶瓷器物组合。请结合提供的内容图（提供器型特征）和风格图（提供釉色和纹饰特征），用专业语言分析最终生成结果图的器形、釉色、纹饰等特征以及两者的融合效果。'
+  styleReferenceName?: string,
+  contentReferenceName?: string,
+  userPrompt: string = '请为这件博物馆展陈对象撰写展签说明。器型参考名称为“未命名器型参考”，风格与纹饰参考名称为“未命名风格参考”，最终展示对象为生成后的完整器物。请在说明中直接使用上述名称，不要使用“图1”“图2”“图3”等指代，也不要在名称后额外添加“（碎片）”“（参考图）”等括号说明。请重点说明最终器物的器型结构、釉色纹饰、风格来源和展陈重点，语言准确、简洁、适合博物馆展示。'
 ): Promise<string> => {
-  // 发送给 VLM 前将所有图像缩放到最长边 ≤ 512px，避免超出 max_model_len
   const [resizedResult, resizedContent, resizedStyle] = await Promise.all([
     resizeBase64Image(imageBase64),
     contentImageBase64 ? resizeBase64Image(contentImageBase64) : Promise.resolve(undefined),
@@ -94,7 +116,10 @@ export const analyzeImage = async (
   ];
 
   if (resizedContent) {
-    userContent.push({ type: 'text', text: '【内容图（器型参考）】' });
+    userContent.push({
+      type: 'text',
+      text: `【器型参考：${contentReferenceName || '未命名器型参考'}】`,
+    });
     userContent.push({
       type: 'image_url',
       image_url: { url: `data:image/jpeg;base64,${resizedContent}` },
@@ -102,14 +127,17 @@ export const analyzeImage = async (
   }
 
   if (resizedStyle) {
-    userContent.push({ type: 'text', text: '【风格图（釉色纹饰参考）】' });
+    userContent.push({
+      type: 'text',
+      text: `【风格参考：${styleReferenceName || '未命名风格参考'}】`,
+    });
     userContent.push({
       type: 'image_url',
       image_url: { url: `data:image/jpeg;base64,${resizedStyle}` },
     });
   }
 
-  userContent.push({ type: 'text', text: '【生成的陶瓷器物图（最终鉴赏对象）】' });
+  userContent.push({ type: 'text', text: '【最终展陈对象】' });
   userContent.push({
     type: 'image_url',
     image_url: { url: `data:image/jpeg;base64,${resizedResult}` },
@@ -117,10 +145,7 @@ export const analyzeImage = async (
 
   const messages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
-    {
-      role: 'user',
-      content: userContent,
-    },
+    { role: 'user', content: userContent },
   ];
 
   const payload = {
@@ -147,17 +172,15 @@ export const analyzeImage = async (
   if (!content) {
     throw new Error('AI 返回内容为空');
   }
-  // Strip out thinking process if it exists
+
   const thinkEnding = '</think>';
   if (content.includes(thinkEnding)) {
     content = content.split(thinkEnding)[1].trim();
   }
-  return content;
+
+  return stripLeadingBracketTitle(content.trim());
 };
 
-/**
- * 向 Qwen3-VL 发送纯文本对话请求（无图片）
- */
 export const chatText = async (userMessage: string): Promise<string> => {
   const messages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
@@ -186,10 +209,10 @@ export const chatText = async (userMessage: string): Promise<string> => {
   const data = await response.json();
   let content = data?.choices?.[0]?.message?.content ?? '';
 
-  // Strip out thinking process if it exists
   const thinkEnding = '</think>';
   if (content.includes(thinkEnding)) {
     content = content.split(thinkEnding)[1].trim();
   }
-  return content;
+
+  return stripLeadingBracketTitle(content.trim());
 };

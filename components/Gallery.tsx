@@ -1,35 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { MOCK_DATABASE } from '../constants';
 import { ImageAsset } from '../types';
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  MagnifyingGlassIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface GalleryProps {
   onSelect: (asset: ImageAsset) => void;
   selectedIds: string[];
-  onDeleteVessels?: (assets: ImageAsset[]) => Promise<void>;
-  hiddenAssetIds?: string[];
 }
 
 type DisplayMode = 'fragment' | 'vessel';
 
 const ITEMS_PER_PAGE = 12;
 
-export const Gallery: React.FC<GalleryProps> = ({
-  onSelect,
-  selectedIds,
-  onDeleteVessels,
-  hiddenAssetIds = [],
-}) => {
+export const Gallery: React.FC<GalleryProps> = ({ onSelect, selectedIds }) => {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('fragment');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedVesselIds, setSelectedVesselIds] = useState<string[]>([]);
-  const [deleting, setDeleting] = useState(false);
 
   const showEraLabel = displayMode !== 'vessel';
 
@@ -39,15 +25,13 @@ export const Gallery: React.FC<GalleryProps> = ({
 
   const filteredAssets = useMemo(() => {
     return MOCK_DATABASE.filter((asset) => {
-      const isHidden = hiddenAssetIds.includes(asset.id);
       const matchesSearch =
         asset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         asset.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesType = asset.type === displayMode;
-
-      return !isHidden && matchesSearch && matchesType;
+      return matchesSearch && matchesType;
     });
-  }, [displayMode, hiddenAssetIds, searchQuery]);
+  }, [displayMode, searchQuery]);
 
   const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
 
@@ -62,67 +46,9 @@ export const Gallery: React.FC<GalleryProps> = ({
     return filteredAssets.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredAssets, currentPage]);
 
-  useEffect(() => {
-    setSelectedVesselIds([]);
-  }, [currentPage, displayMode, searchQuery]);
-
-  const selectedVesselsOnPage = paginatedAssets.filter((asset) => selectedVesselIds.includes(asset.id));
-  const allPageVesselIds = paginatedAssets
-    .filter((asset) => asset.type === 'vessel')
-    .map((asset) => asset.id);
-  const hasSelectedAllOnPage =
-    allPageVesselIds.length > 0 &&
-    allPageVesselIds.every((id) => selectedVesselIds.includes(id));
-
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
-    }
-  };
-
-  const toggleVesselSelection = (event: React.MouseEvent<HTMLButtonElement>, asset: ImageAsset) => {
-    event.stopPropagation();
-    if (asset.type !== 'vessel' || deleting) {
-      return;
-    }
-
-    setSelectedVesselIds((current) =>
-      current.includes(asset.id)
-        ? current.filter((id) => id !== asset.id)
-        : [...current, asset.id]
-    );
-  };
-
-  const toggleSelectAllOnPage = () => {
-    if (hasSelectedAllOnPage) {
-      setSelectedVesselIds([]);
-      return;
-    }
-
-    setSelectedVesselIds(allPageVesselIds);
-  };
-
-  const handleBatchDelete = async () => {
-    if (!onDeleteVessels || selectedVesselsOnPage.length === 0 || deleting) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `确认删除本页选中的 ${selectedVesselsOnPage.length} 个器皿吗？此操作会直接修改 npm_vessels.ts。`
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setDeleting(true);
-      await onDeleteVessels(selectedVesselsOnPage);
-      setSelectedVesselIds([]);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '删除器皿失败';
-      window.alert(message);
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -172,27 +98,6 @@ export const Gallery: React.FC<GalleryProps> = ({
               器皿库
             </button>
           </div>
-
-          {displayMode === 'vessel' && onDeleteVessels && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleSelectAllOnPage}
-                className="px-3 py-1 rounded-sm border border-clay-200 bg-white text-xs font-medium text-clay-700 transition hover:border-indigo-dye hover:text-indigo-dye"
-              >
-                {hasSelectedAllOnPage ? '取消全选' : '全选本页'}
-              </button>
-              <button
-                type="button"
-                onClick={handleBatchDelete}
-                disabled={selectedVesselsOnPage.length === 0 || deleting}
-                className="flex items-center gap-1 px-3 py-1 rounded-sm bg-red-600 text-white text-xs font-medium transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <TrashIcon className="h-3.5 w-3.5" />
-                {deleting ? '删除中...' : `删除选中 (${selectedVesselsOnPage.length})`}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -207,22 +112,6 @@ export const Gallery: React.FC<GalleryProps> = ({
             }`}
             onClick={() => onSelect(asset)}
           >
-            {displayMode === 'vessel' && onDeleteVessels && (
-              <button
-                type="button"
-                onClick={(event) => toggleVesselSelection(event, asset)}
-                disabled={deleting}
-                className={`absolute top-2 right-2 z-20 rounded-full p-1.5 shadow-sm transition disabled:cursor-wait disabled:opacity-60 ${
-                  selectedVesselIds.includes(asset.id)
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-white/95 text-red-600 hover:bg-red-50'
-                }`}
-                title={selectedVesselIds.includes(asset.id) ? '取消选中' : '选中用于批量删除'}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
-            )}
-
             <div className="aspect-[4/5] bg-clay-50 relative overflow-hidden p-6 flex items-center justify-center">
               <img
                 src={asset.url}
@@ -257,11 +146,7 @@ export const Gallery: React.FC<GalleryProps> = ({
             </div>
 
             {selectedIds.includes(asset.id) && (
-              <div
-                className={`absolute bg-indigo-dye text-white rounded-full p-1 shadow-sm z-10 animate-bounce-short ${
-                  displayMode === 'vessel' && onDeleteVessels ? 'top-11 right-2' : 'top-2 right-2'
-                }`}
-              >
+              <div className="absolute top-2 right-2 bg-indigo-dye text-white rounded-full p-1 shadow-sm z-10 animate-bounce-short">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
