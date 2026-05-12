@@ -113,10 +113,10 @@ export const waitForModelsReady = async (
 export const generateStyledPottery = async (
   styleImage: string,
   contentImage: string,
-  ipAdapterWeight: number = 0.8946812847064639,
-  controlNetWeight: number = 0.9618186968889493,
-  denoisingStrength: number = 0.6861563693185955,
-  guidanceScale: number = 7.01249745012551
+  ipAdapterWeight: number = 0.761073232770184,
+  controlNetWeight: number = 1.1436600962199828,
+  denoisingStrength: number = 0.7116545002448849,
+  guidanceScale: number = 6.372871436556558
 ): Promise<string> => {
   const payload: StyleTransferRequest = {
     styleImage,

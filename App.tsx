@@ -30,10 +30,10 @@ function App() {
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
   // Advanced generation params
-  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.8946812847064639);
-  const [controlNetWeight, setControlNetWeight] = useState(0.9618186968889493);
-  const [denoisingStrength, setDenoisingStrength] = useState(0.6861563693185955);
-  const [guidanceScale, setGuidanceScale] = useState(7.01249745012551);
+  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.761073232770184);
+  const [controlNetWeight, setControlNetWeight] = useState(1.1436600962199828);
+  const [denoisingStrength, setDenoisingStrength] = useState(0.7116545002448849);
+  const [guidanceScale, setGuidanceScale] = useState(6.372871436556558);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hasWarnedAdvanced, setHasWarnedAdvanced] = useState(false); // 是否已警告过参数修改
@@ -49,6 +49,7 @@ function App() {
   const resultRef = useRef<HTMLDivElement>(null);
   const workbenchRef = useRef<HTMLDivElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
+  const lastPollAtRef = useRef(0);
 
   // File validation constants
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -140,15 +141,39 @@ function App() {
 
     if (!styleSource || !contentSource) return;
 
-    // 检查服务器状态
-    if (serverOnline === false) {
+    // 生成前主动复查一次服务状态，避免页面刷新后的瞬时误判
+    try {
+      const alive = await checkHealth();
+      setServerOnline(alive);
+      if (!alive) {
+        setModelsReady(false);
+        setServerStatusMsg('推理服务器未启动');
+        setStatus('error');
+        setErrorMessage('推理服务器未启动，请先运行: python -m pipeline.server');
+        return;
+      }
+
+      const st = await getServerStatus();
+      setModelsReady(st.models_ready);
+      if (st.loading) {
+        setServerStatusMsg('模型正在加载中...');
+      } else if (st.error) {
+        setServerStatusMsg(`模型加载失败: ${st.error}`);
+      } else {
+        setServerStatusMsg(null);
+      }
+
+      if (!st.models_ready) {
+        setStatus('error');
+        setErrorMessage('模型尚未加载完成，请等待服务就绪后再试');
+        return;
+      }
+    } catch {
+      setServerOnline(false);
+      setModelsReady(false);
+      setServerStatusMsg('推理服务器未启动');
       setStatus('error');
       setErrorMessage('推理服务器未启动，请先运行: python -m pipeline.server');
-      return;
-    }
-    if (serverOnline && !modelsReady) {
-      setStatus('error');
-      setErrorMessage('模型尚未加载完成，请等待服务就绪后再试');
       return;
     }
 
@@ -159,20 +184,27 @@ function App() {
     setAiAnalysisError(null);
 
     try {
-      // 1. Prepare Base64 Data
-      let styleBase64 = '';
-      if (uploadedStyle) {
-        styleBase64 = uploadedStyle.split(',')[1];
-      } else if (selectedStyle) {
-        styleBase64 = (await urlToBase64(selectedStyle.url)).split(',')[1];
-      }
-
-      let contentBase64 = '';
-      if (uploadedContent) {
-        contentBase64 = uploadedContent.split(',')[1];
-      } else if (selectedContent) {
-        contentBase64 = (await urlToBase64(selectedContent.url)).split(',')[1];
-      }
+      // 1. Prepare Base64 Data in parallel to reduce request latency
+      const [styleBase64, contentBase64] = await Promise.all([
+        (async () => {
+          if (uploadedStyle) {
+            return uploadedStyle.split(',')[1];
+          }
+          if (selectedStyle) {
+            return (await urlToBase64(selectedStyle.url)).split(',')[1];
+          }
+          return '';
+        })(),
+        (async () => {
+          if (uploadedContent) {
+            return uploadedContent.split(',')[1];
+          }
+          if (selectedContent) {
+            return (await urlToBase64(selectedContent.url)).split(',')[1];
+          }
+          return '';
+        })(),
+      ]);
 
       // 2. Call Service
       const generatedImage = await generateStyledPottery(
@@ -199,6 +231,7 @@ function App() {
     let cancelled = false;
 
     const poll = async () => {
+      lastPollAtRef.current = Date.now();
       try {
         const alive = await checkHealth();
         if (cancelled) return;
@@ -226,15 +259,18 @@ function App() {
       }
     };
 
-    poll();
+    if (Date.now() - lastPollAtRef.current > 5000) {
+      poll();
+    }
 
     if (status === 'processing') {
       return () => { cancelled = true; };
     }
 
-    const timer = setInterval(poll, 60000);
+    const pollIntervalMs = serverOnline === false ? 5000 : 60000;
+    const timer = setInterval(poll, pollIntervalMs);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [status]);
+  }, [status, serverOnline]);
 
   // Elapsed time counter during processing
   useEffect(() => {
@@ -347,8 +383,8 @@ function App() {
       <header className="bg-white/80 backdrop-blur-md border-b border-clay-200 sticky top-1 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
-            <div className="w-10 h-10 bg-indigo-dye text-white font-serif text-xl flex items-center justify-center rounded-sm shadow-md transition-transform group-hover:rotate-3">
-              P
+            <div className="w-10 h-10 bg-indigo-dye text-white flex items-center justify-center rounded-sm shadow-md transition-transform group-hover:rotate-3">
+              <span className="font-serif text-xl leading-none -translate-y-px">P</span>
             </div>
             <div className="flex flex-col">
               <h1 className="text-2xl font-serif text-clay-900 tracking-wide leading-none">Pottery<span className="text-indigo-dye">AI</span></h1>
@@ -729,7 +765,7 @@ function App() {
 
                           <div className="flex items-center justify-between pt-4 border-t border-clay-100">
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-indigo-dye text-white font-serif text-xs flex items-center justify-center rounded-sm">P</div>
+                              <div className="w-6 h-6 bg-indigo-dye text-white flex items-center justify-center rounded-sm"><span className="font-serif text-xs leading-none -translate-y-px">P</span></div>
                               <span className="text-xs font-bold tracking-widest text-clay-900">PotteryAI</span>
                             </div>
                             {/* Placeholder QR Code */}
@@ -785,7 +821,7 @@ function App() {
       <footer className="bg-white border-t border-clay-200">
         <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-             <div className="w-8 h-8 bg-clay-900 text-white font-serif flex items-center justify-center rounded-sm">P</div>
+             <div className="w-8 h-8 bg-clay-900 text-white flex items-center justify-center rounded-sm"><span className="font-serif leading-none -translate-y-px">P</span></div>
              <span className="font-serif text-lg text-clay-900">PotteryAI</span>
           </div>
           <p className="text-clay-500 text-sm font-light">
