@@ -9,8 +9,6 @@ import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import { ExclamationCircleIcon, AdjustmentsHorizontalIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import html2canvas from 'html2canvas';
 
-import { MOCK_DATABASE, MOCK_RESTORATIONS } from './constants';
-
 function App() {
   // State for selections
   const [selectedStyle, setSelectedStyle] = useState<ImageAsset | null>(null);
@@ -32,10 +30,10 @@ function App() {
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
   // Advanced generation params
-  const [ipAdapterWeight, setIpAdapterWeight] = useState(1.0010047857781077);
-  const [controlNetWeight, setControlNetWeight] = useState(0.9082318112908826);
-  const [denoisingStrength, setDenoisingStrength] = useState(0.6709403588828577);
-  const [guidanceScale, setGuidanceScale] = useState(7.007471025324963);
+  const [ipAdapterWeight, setIpAdapterWeight] = useState(0.8946812847064639);
+  const [controlNetWeight, setControlNetWeight] = useState(0.9618186968889493);
+  const [denoisingStrength, setDenoisingStrength] = useState(0.6861563693185955);
+  const [guidanceScale, setGuidanceScale] = useState(7.01249745012551);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hasWarnedAdvanced, setHasWarnedAdvanced] = useState(false); // 是否已警告过参数修改
@@ -108,7 +106,6 @@ function App() {
       setUploadedContent(null);
     }
   };
-
   const handleDeleteVessels = async (assets: ImageAsset[]) => {
     const ids = assets.map((asset) => asset.id);
     const response = await fetch('/api/delete-vessel', {
@@ -266,7 +263,7 @@ function App() {
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `porcelain-ai-poster-${Date.now()}.png`;
+      link.download = `pottery-ai-poster-${Date.now()}.png`;
       link.click();
     } catch (error) {
       console.error(error);
@@ -354,7 +351,7 @@ function App() {
               P
             </div>
             <div className="flex flex-col">
-              <h1 className="text-2xl font-serif text-clay-900 tracking-wide leading-none">Porcelain<span className="text-indigo-dye">AI</span></h1>
+              <h1 className="text-2xl font-serif text-clay-900 tracking-wide leading-none">Pottery<span className="text-indigo-dye">AI</span></h1>
               <span className="text-[10px] uppercase tracking-[0.2em] text-clay-500 mt-1">AI 数字化修复</span>
             </div>
           </div>
@@ -575,10 +572,10 @@ function App() {
                   <div className="flex items-center justify-center">
                     <button 
                       onClick={() => {
-                        setIpAdapterWeight(1.0010047857781077);
-                        setControlNetWeight(0.9082318112908826);
-                        setDenoisingStrength(0.6709403588828577);
-                        setGuidanceScale(7.007471025324963);
+                        setIpAdapterWeight(0.8581559237688047);
+                        setControlNetWeight(0.8599484410364789);
+                        setDenoisingStrength(0.6519547299322923);
+                        setGuidanceScale(7.217972272548148);
                       }}
                       className="text-xs py-2 px-4 rounded-md border border-clay-300 text-clay-600 hover:bg-clay-100 transition-colors"
                     >
@@ -733,7 +730,7 @@ function App() {
                           <div className="flex items-center justify-between pt-4 border-t border-clay-100">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 bg-indigo-dye text-white font-serif text-xs flex items-center justify-center rounded-sm">P</div>
-                              <span className="text-xs font-bold tracking-widest text-clay-900">PorcelainAI</span>
+                              <span className="text-xs font-bold tracking-widest text-clay-900">PotteryAI</span>
                             </div>
                             {/* Placeholder QR Code */}
                             <div className="w-12 h-12 bg-clay-100 p-1 rounded-sm">
@@ -747,7 +744,7 @@ function App() {
                     <div className="mt-8 flex justify-center gap-4">
                       <a 
                         href={resultImage} 
-                        download="porcelain-ai-result.png"
+                        download="pottery-ai-result.png"
                         className="bg-white text-clay-900 px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:bg-clay-200 transition-colors flex items-center gap-2 tracking-wide"
                       >
                         下载作品
@@ -789,10 +786,10 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
              <div className="w-8 h-8 bg-clay-900 text-white font-serif flex items-center justify-center rounded-sm">P</div>
-             <span className="font-serif text-lg text-clay-900">PorcelainAI</span>
+             <span className="font-serif text-lg text-clay-900">PotteryAI</span>
           </div>
           <p className="text-clay-500 text-sm font-light">
-            © {new Date().getFullYear()} PorcelainAI Project. <br className="md:hidden"/>
+            © {new Date().getFullYear()} PotteryAI Project. <br className="md:hidden"/>
             将传统遗产与现代 AI 融合。
           </p>
         </div>
