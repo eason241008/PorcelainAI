@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Gallery } from './components/Gallery';
 import { DropArea } from './components/DropArea';
 import { ShowcaseCarousel } from './components/ShowcaseCarousel';
@@ -50,6 +50,40 @@ function App() {
   const workbenchRef = useRef<HTMLDivElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
   const lastPollAtRef = useRef(0);
+
+  const refreshServerStatus = useCallback(async () => {
+    lastPollAtRef.current = Date.now();
+    try {
+      const alive = await checkHealth();
+      setServerOnline(alive);
+
+      if (!alive) {
+        setModelsReady(false);
+        setServerStatusMsg('推理服务器未启动');
+        return { alive: false, ready: false };
+      }
+
+      const st = await getServerStatus();
+      setModelsReady(st.models_ready);
+
+      if (st.loading) {
+        setServerStatusMsg('模型正在加载中...');
+      } else if (st.error) {
+        setServerStatusMsg(`模型加载失败: ${st.error}`);
+      } else if (st.models_ready) {
+        setServerStatusMsg('服务就绪');
+      } else {
+        setServerStatusMsg('模型状态未知');
+      }
+
+      return { alive: true, ready: st.models_ready };
+    } catch {
+      setServerOnline(false);
+      setModelsReady(false);
+      setServerStatusMsg('推理服务器未启动');
+      return { alive: false, ready: false };
+    }
+  }, []);
 
   // File validation constants
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -142,38 +176,18 @@ function App() {
     if (!styleSource || !contentSource) return;
 
     // 生成前主动复查一次服务状态，避免页面刷新后的瞬时误判
-    try {
-      const alive = await checkHealth();
-      setServerOnline(alive);
-      if (!alive) {
-        setModelsReady(false);
-        setServerStatusMsg('推理服务器未启动');
-        setStatus('error');
-        setErrorMessage('推理服务器未启动，请先运行: python -m pipeline.server');
-        return;
-      }
-
-      const st = await getServerStatus();
-      setModelsReady(st.models_ready);
-      if (st.loading) {
-        setServerStatusMsg('模型正在加载中...');
-      } else if (st.error) {
-        setServerStatusMsg(`模型加载失败: ${st.error}`);
-      } else {
-        setServerStatusMsg(null);
-      }
-
-      if (!st.models_ready) {
-        setStatus('error');
-        setErrorMessage('模型尚未加载完成，请等待服务就绪后再试');
-        return;
-      }
-    } catch {
+    const { alive, ready } = await refreshServerStatus();
+    if (!alive) {
       setServerOnline(false);
       setModelsReady(false);
       setServerStatusMsg('推理服务器未启动');
       setStatus('error');
       setErrorMessage('推理服务器未启动，请先运行: python -m pipeline.server');
+      return;
+    }
+    if (!ready) {
+      setStatus('error');
+      setErrorMessage('模型尚未加载完成，请等待服务就绪后再试');
       return;
     }
 
@@ -226,41 +240,22 @@ function App() {
 
 
 
+  // 挂载时立即检查一次服务状态
+  useEffect(() => {
+    void refreshServerStatus();
+  }, [refreshServerStatus]);
+
   // 启动时检测服务器状态；空闲时低频轮询，生成中暂停轮询，避免打断主推理任务
   useEffect(() => {
     let cancelled = false;
 
     const poll = async () => {
-      lastPollAtRef.current = Date.now();
-      try {
-        const alive = await checkHealth();
-        if (cancelled) return;
-        setServerOnline(alive);
-        if (alive) {
-          const st = await getServerStatus();
-          if (cancelled) return;
-          setModelsReady(st.models_ready);
-          if (st.loading) {
-            setServerStatusMsg('模型正在加载中...');
-          } else if (st.error) {
-            setServerStatusMsg(`模型加载失败: ${st.error}`);
-          } else if (st.models_ready) {
-            setServerStatusMsg(null);
-          }
-        } else {
-          setModelsReady(false);
-          setServerStatusMsg('推理服务器未启动');
-        }
-      } catch {
-        if (cancelled) return;
-        setServerOnline(false);
-        setModelsReady(false);
-        setServerStatusMsg('推理服务器未启动');
-      }
+      await refreshServerStatus();
+      if (cancelled) return;
     };
 
     if (Date.now() - lastPollAtRef.current > 5000) {
-      poll();
+      void poll();
     }
 
     if (status === 'processing') {
@@ -270,7 +265,7 @@ function App() {
     const pollIntervalMs = serverOnline === false ? 5000 : 60000;
     const timer = setInterval(poll, pollIntervalMs);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [status, serverOnline]);
+  }, [status, serverOnline, refreshServerStatus]);
 
   // Elapsed time counter during processing
   useEffect(() => {
@@ -505,6 +500,9 @@ function App() {
                  </span>
 
                  {/* 服务器状态提示 */}
+                 {serverOnline === null && (
+                   <span className="text-[10px] text-clay-400 text-center leading-tight">检查服务中...</span>
+                 )}
                  {serverOnline === false && (
                    <span className="text-[10px] text-red-500 text-center leading-tight">⚠ 推理服务器离线</span>
                  )}
