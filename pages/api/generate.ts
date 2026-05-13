@@ -8,6 +8,7 @@ interface GenerateRequestBody {
   ipAdapterWeight?: number;
   controlNetWeight?: number;
   denoisingStrength?: number;
+  guidanceScale?: number;
 }
 
 // Define the Flask response structure
@@ -40,7 +41,7 @@ export default async function handler(
     const FLASK_API_URL = process.env.FLASK_API_URL || 'http://127.0.0.1:8000/process';
     
     // 3. Get data from request body
-    const { contentImage, styleImage, promptOverride, ipAdapterWeight, controlNetWeight, denoisingStrength } = req.body as GenerateRequestBody;
+    const { contentImage, styleImage, promptOverride, ipAdapterWeight, controlNetWeight, denoisingStrength, guidanceScale } = req.body as GenerateRequestBody;
 
     // Basic validation
     if (!contentImage || !styleImage) {
@@ -60,7 +61,8 @@ export default async function handler(
         promptOverride,
         ipAdapterWeight,
         controlNetWeight,
-        denoisingStrength
+        denoisingStrength,
+        guidanceScale
       }),
     });
 
