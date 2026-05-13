@@ -608,10 +608,10 @@ function App() {
                   <div className="flex items-center justify-center">
                     <button 
                       onClick={() => {
-                        setIpAdapterWeight(0.8581559237688047);
-                        setControlNetWeight(0.8599484410364789);
-                        setDenoisingStrength(0.6519547299322923);
-                        setGuidanceScale(7.217972272548148);
+                        setIpAdapterWeight(0.761073232770184);
+                        setControlNetWeight(1.1436600962199828);
+                        setDenoisingStrength(0.7116545002448849);
+                        setGuidanceScale(6.372871436556558);
                       }}
                       className="text-xs py-2 px-4 rounded-md border border-clay-300 text-clay-600 hover:bg-clay-100 transition-colors"
                     >
